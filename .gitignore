@@ -45,3 +45,5 @@ out/
 # Project-specific
 klausuren/*
 !klausuren/testklausur/
+!klausuren/test/
+!klausuren/test-small/

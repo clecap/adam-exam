@@ -1,0 +1,41 @@
+\documentclass{article}
+\usepackage{environ}
+\usepackage{pgffor}
+\usepackage{expl3}
+\usepackage{xparse}
+
+\NewEnviron{copies}[1]{%
+ \foreach \n in {1,...,#1}{%
+    \BODY%
+    \ifnum\n<#1\newpage\fi
+  }%
+}
+
+% \numcopies{n} in the preamble sets how many times the document body is
+% printed. n=1 (the default) leaves the body untouched; n>1 wraps the
+% whole body in \begin{copies}{n}...\end{copies}, injected right after
+% \begin{document} and right before \end{document}.
+\ExplSyntaxOn
+\int_new:N \g_numcopies_int
+\int_gset:Nn \g_numcopies_int {1}
+\NewDocumentCommand{\numcopies}{m}{\int_gset:Nn \g_numcopies_int {#1}}
+
+\ExplSyntaxOff
+
+\numcopies{3}
+
+\begin{document}
+
+\begin{copies}{10}
+
+One line
+
+Second line
+
+%\qqqqq
+
+Sambana
+
+\end{copies}
+
+\end{document}

@@ -1,0 +1,108 @@
+% --- 7-seg guide (thin grey) + optional example overlay (thicker) ---
+
+\newcommand{\sevensegdigit}[1]{%
+  \tikz[baseline]{
+    \def\w{1.0}
+    \def\h{2.0}
+    \def\m{0.12}    % margin
+    \def\lwG{0.20pt}
+    \def\lwE{1.10pt}
+
+    % Segment endpoints (simple "stick" style)
+    % a: top, b: upper-right, c: lower-right, d: bottom, e: lower-left, f: upper-left, g: middle
+    \coordinate (a1) at (\m,\h-\m);
+    \coordinate (a2) at (\w-\m,\h-\m);
+
+    \coordinate (g1) at (\m,\h/2);
+    \coordinate (g2) at (\w-\m,\h/2);
+
+    \coordinate (d1) at (\m,\m);
+    \coordinate (d2) at (\w-\m,\m);
+
+    \coordinate (f1) at (\m,\h-\m);
+    \coordinate (f2) at (\m,\h/2);
+
+    \coordinate (e1) at (\m,\h/2);
+    \coordinate (e2) at (\m,\m);
+
+    \coordinate (b1) at (\w-\m,\h-\m);
+    \coordinate (b2) at (\w-\m,\h/2);
+
+    \coordinate (c1) at (\w-\m,\h/2);
+    \coordinate (c2) at (\w-\m,\m);
+
+    % Outer box + guides
+    \draw[gray!30, line width=\lwG] (0,0) rectangle (\w,\h);
+    \draw[gray!40, line width=\lwG] (a1) -- (a2);
+    \draw[gray!40, line width=\lwG] (g1) -- (g2);
+    \draw[gray!40, line width=\lwG] (d1) -- (d2);
+    \draw[gray!40, line width=\lwG] (f1) -- (f2);
+    \draw[gray!40, line width=\lwG] (e1) -- (e2);
+    \draw[gray!40, line width=\lwG] (b1) -- (b2);
+    \draw[gray!40, line width=\lwG] (c1) -- (c2);
+
+    % Helper: draw a segment in example style
+    \def\seg##1##2{\draw[black, line width=\lwE, line cap=round] (##1) -- (##2);}
+
+    % Example overlay for digit #1
+    \def\d{#1}
+    % 0: a b c d e f
+    \ifnum\d=0
+      \seg{a1}{a2}\seg{b1}{b2}\seg{c1}{c2}\seg{d1}{d2}\seg{e1}{e2}\seg{f1}{f2}
+    \fi
+    % 1: b c
+    \ifnum\d=1
+      \seg{b1}{b2}\seg{c1}{c2}
+    \fi
+    % 2: a b g e d
+    \ifnum\d=2
+      \seg{a1}{a2}\seg{b1}{b2}\seg{g1}{g2}\seg{e1}{e2}\seg{d1}{d2}
+    \fi
+    % 3: a b g c d
+    \ifnum\d=3
+      \seg{a1}{a2}\seg{b1}{b2}\seg{g1}{g2}\seg{c1}{c2}\seg{d1}{d2}
+    \fi
+    % 4: f g b c
+    \ifnum\d=4
+      \seg{f1}{f2}\seg{g1}{g2}\seg{b1}{b2}\seg{c1}{c2}
+    \fi
+    % 5: a f g c d
+    \ifnum\d=5
+      \seg{a1}{a2}\seg{f1}{f2}\seg{g1}{g2}\seg{c1}{c2}\seg{d1}{d2}
+    \fi
+    % 6: a f g e c d
+    \ifnum\d=6
+      \seg{a1}{a2}\seg{f1}{f2}\seg{g1}{g2}\seg{e1}{e2}\seg{c1}{c2}\seg{d1}{d2}
+    \fi
+    % 7: a b c
+    \ifnum\d=7
+      \seg{a1}{a2}\seg{b1}{b2}\seg{c1}{c2}
+    \fi
+    % 8: a b c d e f g
+    \ifnum\d=8
+      \seg{a1}{a2}\seg{b1}{b2}\seg{c1}{c2}\seg{d1}{d2}\seg{e1}{e2}\seg{f1}{f2}\seg{g1}{g2}
+    \fi
+    % 9: a b c d f g
+    \ifnum\d=9
+      \seg{a1}{a2}\seg{b1}{b2}\seg{c1}{c2}\seg{d1}{d2}\seg{f1}{f2}\seg{g1}{g2}
+    \fi
+  }%
+}
+
+% A "blank" guide without example overlay (for the actual user entry)
+\newcommand{\sevensegguide}{%
+  \tikz[baseline]{
+    \def\w{1.0}
+    \def\h{2.0}
+    \def\m{0.12}
+    \def\lwG{0.20pt}
+    \draw[gray!30, line width=\lwG] (0,0) rectangle (\w,\h);
+    \draw[gray!40, line width=\lwG] (\m,\h-\m) -- (\w-\m,\h-\m);
+    \draw[gray!40, line width=\lwG] (\m,\h/2) -- (\w-\m,\h/2);
+    \draw[gray!40, line width=\lwG] (\m,\m) -- (\w-\m,\m);
+    \draw[gray!40, line width=\lwG] (\m,\h-\m) -- (\m,\h/2);
+    \draw[gray!40, line width=\lwG] (\m,\h/2) -- (\m,\m);
+    \draw[gray!40, line width=\lwG] (\w-\m,\h-\m) -- (\w-\m,\h/2);
+    \draw[gray!40, line width=\lwG] (\w-\m,\h/2) -- (\w-\m,\m);
+  }%
+}
