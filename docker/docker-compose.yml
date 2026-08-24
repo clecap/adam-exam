@@ -1,0 +1,9 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: adam-exam
+    volumes:
+      - ../klausuren:/app/klausuren
+      - ../python:/app/python:ro

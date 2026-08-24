@@ -53,8 +53,8 @@
 %%
 %BEGIN_FOLD Load own style files
 %%
-\input{../../../../sty/sevenseg.sty}                % Implements a 7-segment form
-\input{../../../../sty/dyncounter.sty}                  % Implements dynamic counters
+\input{adam-exam/sty/sevenseg.sty}                % Implements a 7-segment form
+\input{adam-exam/sty/dyncounter.sty}                  % Implements dynamic counters
 %END_FOLD
 
 
@@ -203,6 +203,7 @@
 \newbool{buildingCorrections}%  flag indicating that we are building correction sheets; effect: print a \CheckBox{}
 % NOTE: we need this construction since in the NORMAL run we want to add points but we do not want to set checkboxes
 %       however, hyperref generates references somewhere and they then would be undefined and produce warnings
+% TODO: currently showsummation is used for this.
 
 \makeatletter
 
@@ -262,10 +263,12 @@
 % a hint box has an H as part of the id
 \newcommand{\hb}[1]{
   \stepcounter{hintbox}%  Increment counter of all checkboxes ensures unique numbering
-  \ifinlist{\currentQuestion}{\my@grading}{\def\readonlyflag{false}\def\bordercolor{1 0 0}\def\textcolor{red}}{\def\readonlyflag{true}\def\bordercolor{0 0 0}\def\textcolor{black}}% set the proper read only flag
-  \mbox{\CheckBox[name=H\currentQuestion-\thehintbox-\myexamserial,width=14bp,height=14bp,borderwidth=2,borderstyle=S,bordercolor={0 0 0},readonly=\readonlyflag]{}}% \mbox ensures proper handling of height
-  \hspace*{0.3cm}
-  \noindent\parbox{0.8\linewidth}{\textbf{Hint:} #1}
+  \ifbool{showsummation}{%  
+    \ifinlist{\currentQuestion}{\my@grading}{\def\readonlyflag{false}\def\bordercolor{1 0 0}\def\textcolor{red}}{\def\readonlyflag{true}\def\bordercolor{0 0 0}\def\textcolor{black}}% set the proper read only flag
+    \mbox{\CheckBox[name=H\currentQuestion-\thehintbox-\myexamserial,width=14bp,height=14bp,borderwidth=2,borderstyle=S,bordercolor={0 0 0},readonly=\readonlyflag]{}}% \mbox ensures proper handling of height
+    \hspace*{0.3cm}
+    \noindent\parbox{0.8\linewidth}{\textbf{Hint:} #1}
+  }{}
 }
 
 
