@@ -557,20 +557,23 @@ function goFirstIncomplete (s) {  // navigate to the page with the first incompl
                                   // return true if navigating to a page 
   if (s === null || s === undefined) {s = getSerial();}
   var q = firstIncompleteQuestion (s);
-  // app.alert ("goFirstIncomplete: sees firstIncompleteQuestion: " + q);
+   // app.alert ("goFirstIncomplete: sees firstIncompleteQuestion: " + q);
   var page;
   if (q > 0) {
     var name = "grader" + q + "-" + s;  
     var field =this.getField(name);  if (!field) {app.alert ("ERROR: goFirstIncomplete did not find field: " + name); return;}
-    // app.alert ("found field " + name);
+     // app.alert ("found field " + name);
     page = firstPageOfField (name);
-    // app.alert ("found page " + page);
+     // app.alert ("found page " + page);
   }
   else {  // app.alert ("goFirstIncomplete: All questions graded for serial " + s); 
     return;
   }
   
   // app.alert ("goFirstIncomplete: Now going to " + page);
+  //console.show();
+  //console.println ("going to: " + page);
+
   goToPage (page);    // CAVE: This navigates asynchronously - beware of race conditions !
   return true;
 }
@@ -579,7 +582,7 @@ function goFirstIncomplete (s) {  // navigate to the page with the first incompl
 function goToPage (requested) {// helper for proper redraw after jumping to a page. Defer the navigation so it happens AFTER the button event finishes
   app.setTimeOut(
     "try { " +
-      "var d = app.activeDocs[0]; " +
+      " var d = app.activeDocs[0]; " +
       "d.pageNum = " + requested + "; " +
       "d.syncAnnotScan(); " +      // force/complete annot (widget) scan
       "d.calculateNow(); " +       // optional: refresh calculations/formatting
@@ -609,8 +612,6 @@ function goToNext () {
 
 
 
-
-
 /* variables must be defined at the end or adobe vomits */
 var numQuestions;  
 var completed;       // maps number of question to boolean value indicating if this question has been graded completed  // TODO: deprecate ????
@@ -633,8 +634,10 @@ try {
 
   var navigating = goFirstIncomplete();           // go to first ungraded question, obtain info, if we go asynchronously
   if (navigating) {  // there still is an ungraded question to which we are navigating now asynchronously
+ 
   }
   else {
+   
     var s = getSerial ();
     // app.alert ("now finalizing serial: " + s);
     lastProcessing(s);

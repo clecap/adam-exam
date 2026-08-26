@@ -1,9 +1,4 @@
 
-1) Design the exam.
-
-2) 
-
-
 
 # Place file trusted.js into
 
@@ -31,12 +26,6 @@ not browser-embedded
 
 
 
-## Requirements
-
-python3
-pip3 install pypdf    
-
-
 
 
 
@@ -53,13 +42,7 @@ every question consists of
 * A correction area
 
 
-# Files
 
-jobname.tot     Defines the total number if points which may be achieved in the exam
-
-jobname.sol     Defines the correct answers for every task
-
-jobname.crd     Defines the positions where the pointforms should be added
 
 
 

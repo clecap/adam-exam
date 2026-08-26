@@ -7,3 +7,4 @@ services:
     volumes:
       - ../klausuren:/app/klausuren
       - ../python:/app/python:ro
+      - ../driver:/app/driver:ro

@@ -41,6 +41,20 @@ suitably encoded by page and serial numbers in QR codes and ready to be printed.
 
 4. For every new exam make a subdirectory inside of the  ```klausuren/``` which in our example resides in ```~username/WORKING/adam-exam/klausuren```
 
+5. To generate the docker image:
+
+```
+  cd docker
+  docker build -t adam-exam:latest .
+  docker compose up
+```
+
+
+
+
+
+
+
 ## Explanation
 
 Getting the paths correct is important for the following reasons:
@@ -89,21 +103,10 @@ When restarting grading,
 adm-exam must be in the path
 
 
-# Pair Programming:
-
-* Senseless application of specific patterns. Example: Entire application including helper functions is placed into a section with high privileges thus keeping the privilege bracket open
-for all kinds of bug in helper fuction.
-
-* Bloating: 
-
-
 
 Correcting:
 
 In a directory not containing a START.pdf script the files can and must be opened individually AND saved individually (CHECK!!)
 
 
-# Lessons Learned
-
-* after a \n in a JS file there must be a blank 
 

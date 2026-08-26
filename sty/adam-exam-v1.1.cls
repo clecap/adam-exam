@@ -960,8 +960,10 @@
 
 
 
-\input{../../../../customize/disclaimer.tex}
+%\input{../../../../customize/disclaimer.tex}
 
+
+\input{customize/disclaimer.tex}
 
 
 \extrafootheight{4cm}   % Reserve extra space for the tall footer
@@ -1220,8 +1222,8 @@
 
 \newcommand{\preparecorrection}[0]{%
   \commonsettings%
-  \input{../../../../js/inject.js}    % inject some library functions 
-  \input{../../../../js/correct.js}   % inject some more specific application functions
+  \input{js/inject.js}    % inject some library functions 
+  \input{js/correct.js}   % inject some more specific application functions
 
 }% end preparecorrection
 

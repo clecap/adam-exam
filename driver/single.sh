@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -Euo pipefail
 
 # Determine top directory
 script_source="${BASH_SOURCE[0]}"
@@ -26,20 +26,13 @@ ENTERMATRIKEL="$6"
 SHOWSUMMATION="$7"
 
 
-ADAM_VERSION="v1.1"
-ADAM_PATH="../sty/"
+ADAM="adam-exam-v1.1"
 
-#### export TEXINPUTS="${TOP_DIR}/sty"
 
-ADAM="${ADAM_PATH}adam-exam-${ADAM_VERSION}"
+printf "single.sh: TOP_DIR is ${TOP_DIR} \n"
+printf "single.sh: ADAM is ${ADAM} \n"
+printf "single.sh: TEXINPUTS is ${TEXINPUTS} \n"
 
-printf "TOP_DIR is ${TOP_DIR} \n"
-printf "ADAM is ${ADAM} \n"
-printf "TEXINPUTS is ${TEXINPUTS} \n"
-
-kpsewhich ${ADAM}
-
-printf "DONE KPSE"
 
 # SOURCE="\documentclass{./adam-exam-v1}\examSerial{0004}\grading{1,2,3,4}{Cap}\examId{rnds-feb-2026}\makecorrection"
 
@@ -59,19 +52,27 @@ SOURCE="
   \end{document}
 "
 
-BUILD_DIRECTORY="klausuren/$EXAMID/build-corrections/"
+OUTPUT_DIRECTORY="${TOP_DIR}/klausuren/$EXAMID/build-corrections"
+GRADER_DIRECTORY="$TOP_DIR/klausuren/$EXAMID/corrections/$GRADER/"
 JOBNAME="${SERIAL}-${EXAMID}-${GRADER}"
+
+mkdir -p ${OUTPUT_DIRECTORY}
+mkdir -p ${GRADER_DIRECTORY}
+
+# TEXINPUTS="${TOP_DIR}"
 
 printf "    hhhhh TEXINPUTS is: ${TEXINPUTS} \n"
 
-printf "NOW"
+printf "NOW \n"
+
+
 
 # compile to pdf
-pdflatex -jobname="$JOBNAME" -recorder -output-directory="$TOP_DIR/klausuren/$EXAMID/build-corrections" ${SOURCE}
+pdflatex -jobname="$JOBNAME" -recorder -output-directory="$OUTPUT_DIRECTORY" ${SOURCE}
 # run twice in order to get the references correct
-pdflatex -jobname="$JOBNAME" -recorder -output-directory="$TOP_DIR/klausuren/$EXAMID/build-corrections" ${SOURCE}
+pdflatex -jobname="$JOBNAME" -recorder -output-directory="$OUTPUT_DIRECTORY" ${SOURCE}
 
 # move to directory for proper grader 
-mv "$TOP_DIR/klausuren/$EXAMID/build-corrections/$JOBNAME.pdf" "$TOP_DIR/klausuren/$EXAMID/corrections/$GRADER/"
+mv "$TOP_DIR/klausuren/$EXAMID/build-corrections/$JOBNAME.pdf" "$GRADER_DIRECTORY"
 
 printf "Completed \n"
