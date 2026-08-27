@@ -57,11 +57,6 @@ function computeAll(q, s) {
 
 
 
-
-
-
-
-
 function determineCompletedAndZ (q, s) {   // check the zero point boxesand discretionary fields  and set the Z, D and the completed arrays accordingly
   var val;
   var discVal;        // field containing points in discretionary grading case
@@ -77,7 +72,7 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
   discVal = GET_FIELD ("D" + q + "-" + s).value;  // value of field containing points for discretionary grading, if used
   if (typeof discVal === "number" ) {    // app.alert ("Using discretionary grading for question " + q + " serial " + s);
       sum = discVal;
-      completed = true;                  // discretionary is complete by definition
+      completed = true;                  // discretionary is complete by definition)
   }
   else {          // app.alert ("Using structured grading for question " + q + " serial " + s);
     completed = GET_FIELD ("Z" + q + "-" + s).isBoxChecked(0);  // structured is complete when the complete box is set
@@ -119,9 +114,6 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
   colorify (q, s, completed);
   return sum;
 }
-
-
-
 
 
 

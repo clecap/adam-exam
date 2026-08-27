@@ -1047,8 +1047,6 @@
  % \TextField[name=nextjob,height=1.0cm,width=18cm,readonly=true,bordercolor={yellow},borderwidth=3,onfocus={goFirstIncomplete();}]{\phantom{XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}}%
  % \end{textblock*}
   \begin{textblock*}{270mm}(198mm,280mm)
-    \PushButton[name=locksavenext,height=1.0cm,width=3cm,bordercolor={orange},color={red},borderwidth=3,onclick={ Process ( {lock:true, save: true, close: true, next:true} );}]{\bf Lock, Save \& Next...}
-    \hspace*{1cm}%
     \PushButton[name=savenext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save:true, close: true, next: true} );}]{Save \& Next...}%
     \hspace*{1cm}
     \PushButton[name=skipnext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {close:true, next:true} );}]{Skip \& Next...}

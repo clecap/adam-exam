@@ -1,0 +1,70 @@
+\documentclass{article}
+
+
+\usepackage{xcolor}
+\usepackage{eforms}                  % for PDF form elements with more capabilities than hyperref
+\usepackage[absolute,overlay]{textpos}
+
+\input{inject.js}%          inject some JS library functions 
+
+\begin{insDLJS}{start}{Start}
+function mainStart() {
+  try {
+    var doc = this;
+    var missingSheets = false;     // have missing sheets been detected?
+
+    var currentBase = doc.documentFileName;
+    var currentFull = norm(doc.path);
+    if (!currentBase || !currentFull) {app.alert("ERROR: Cannot determine current document path. ABORTING."); return; }
+    var baseDir = dirname(currentFull);
+
+    var outDir  = join ( baseDir, "completed" );
+    var outPath = join ( outDir, currentBase );
+
+    var entries = getQueueEntries (baseDir);
+    var eligibles = getEligibles (entries);
+
+    if (eligibles.length != 0) { app.alert ( entries.length + " exam sheets referenced in queue file \n\n " + eligibles.length + " not yet graded\n\n Continuing with grading now..." ); }
+    else { app.alert ( entries.length + " exam sheets found \n\n All have been greaded." ); return; }
+
+    for (var j = 0; j < eligibles.length; j++) {  // loop over all eligibles 
+      var nextFile = eligibles[j];
+      var nextFull = join (baseDir, nextFile);  // ---------------- make more unfirom. the eligibles hsould actually BE eligible
+      
+      if ( !TrustedFileExists (nextFull) ) {  // skip those we do not find - at least for now
+        app.alert ("ERROR: Exam sheet " + nextFile + " mentioned in queue.txt and not yet graded but could not find file: \n\n " + nextFull + "\n\n Skipping for now!" ); 
+        missingSheets = true;   // mark that we had one sheet missing
+        break;  // check next 
+      }
+      // found one eligible
+      // mark opening process as opened by START.pdf, to silence error message in the opened target
+      try {
+        if (!global.openedByScript) {global.openedByScript = {};}      // ensure existence of a global time stamp tracker
+        global.openedByScript[nextFull] = (new Date()).getTime();;     // store time stamp of opening the next
+    //    OpenFile (nextFull); 
+        var newDoc = app.openDoc( {cPath: nextFull, bHidden: false});  // app.alert ("Newly opened is: " + newDoc);
+        
+      } catch (exe) {app.alert ("ERROR: exception opening " + nextFull + " due to: " + exe);}
+      doc.closeDoc(true);    // close this document, which is START.pdf and continue grading process in the one just opened document
+      return;                // continues in the exam sheet PDF
+     } // end for loop
+     // looped over all eligibles and did not find one which we could work on and which was not missing
+     if (missingSheets) {app.alert ("Some sheets referenced in queue.txt were missing as files.");}
+     else {app.alert ("This should not happen. Consult system designer");}
+     doc.closeDoc (true);
+  } catch (excep) {
+     if (excep == "Missing-Queue-File") {} // we already dealt with this inside of trusted.js - so ignore here for better UI
+     else {app.alert ("ERROR: We found: " + excep); }
+    }
+}
+\end{insDLJS}
+
+\begin{document}
+
+\begin{textblock*}{70mm}(60mm,80mm)
+  \PushButton[name=status,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={mainStart();}]{\bf Grade exams...}
+\end{textblock*}  
+
+\end{document}
+
+

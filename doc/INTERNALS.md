@@ -43,8 +43,9 @@ TeX moves around information in files. These are the employed files.
 | jobname.sol | Contains the information for typesetting the correct answers and thhe grading user interface for every question of the exam |
 | jobname.crd | Contains the positions where the form elements for the total number of points per question should be typeset                |
 
+* tex/START.tex is a TeX file for building START.pdf, which bootstraps the fully automated grading mode.
 
-# Form Codes:
+# PDF Form Elements
 
 ```
 <num>C        optional comment to question <num>
@@ -74,4 +75,15 @@ PushButton
 Textfield
 ChoiceMenu
 ```
+
+
+# Cognitive Model of Questions
+
+Every exam question consists of
+
+* A title
+* A question area
+* An answer area
+* A solution area
+
 

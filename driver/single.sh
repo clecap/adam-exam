@@ -61,12 +61,6 @@ mkdir -p ${GRADER_DIRECTORY}
 
 # TEXINPUTS="${TOP_DIR}"
 
-printf "    hhhhh TEXINPUTS is: ${TEXINPUTS} \n"
-
-printf "NOW \n"
-
-
-
 # compile to pdf
 pdflatex -jobname="$JOBNAME" -recorder -output-directory="$OUTPUT_DIRECTORY" ${SOURCE}
 # run twice in order to get the references correct

@@ -28,22 +28,8 @@ function cloneArray(a) {
 
 
 
-function GetUserDir () {
-  var doc = this;
-  var idName = TrustedGetId();                 //calls trusted function - TODO: check existence 
-  var currentFull = norm(doc.path);
-  var currentBase = doc.documentFileName;
-  if (!currentBase || !currentFull) {app.alert("GetUserDir cannot determine current document path."); return "UNKNOWN"; }
-  var baseDir = dirname(currentFull);
-  if (!baseDir) {app.alert ("ERROR: Could not obtain baseDir in GetUserDir"); return;}
-  var userDir = join(baseDir, safeName(idName));
- return userDir;
-}
-
-
-
-
 function percentToMark (p) {
+  if (typeof p != "number") { throw new Error ("percentToMark: assertion error: wrong type: " + typeof p); }
   if      ( p > 95 && p <= 100 )   {return "1.0"; }
   else if ( p > 90 && p <=  95 )   {return "1.3"; }
   else if ( p > 85 && p <=  90 )   {return "1.7"; }
@@ -55,8 +41,7 @@ function percentToMark (p) {
   else if ( p > 55 && p <=  60 )   {return "3.7"; }     
   else if ( p > 50 && p <=  55 )   {return "4.0"; }
   else if ( p >= 0 && p <=  50 )   {return "5";   }
-  else {return "NONE";}
-//  else { app.alert ("ERROR: percentToMark cannot convert to a grade the value of " + p); return "ERROR";}
+  else { throw new Error ("percentToMark: assertion error: wrong value of percentages: " + p); }
 }
 
 
@@ -81,25 +66,43 @@ function getQueueEntries (baseDir) {
 
 // given a list of entries return a list of ungraded entries (ie entries eligible for grading)
 function getEligibles (entries) {
-  var userDir     = GetUserDir ();
+  var doc = this;
+  var currentBase = doc.documentFileName;
+  var currentFull = norm(doc.path);
+  if (!currentBase || !currentFull) {app.alert("ERROR: Cannot determine current document path. ABORTING."); return; }
+  var baseDir = dirname(currentFull);
+  var completedDir = join (baseDir, "completed");
+
   var eligibles   = [];
   var entry;
   for (var step = 0; step < entries.length; step++) {
     entry = entries[step];
-    if (TrustedFileExists(join(userDir, entry))) continue;
+    if (TrustedFileExists(join(completedDir, entry))) continue;
     eligibles.push ( entry);
   }
   return eligibles;
 }
 
 
+// if the button exists, disable it
+function disableButton (name) {
+  var btn = this.getField(name);
+  if (btn) { btn.readonly = true;  btn.fillColor = color.ltGray; btn.textColor = color.dkGray; 
+  }
+}
+
+// if the button exists, enable it
+function enableButton (name) {
+  var btn = this.getField(name);
+  if (btn) { btn.readonly = true;  btn.fillColor = color.white; btn.textColor = color.black; }
+}
 
 
 
 
-// if shallSave true:  attempt to save ope file (if it exists already, show an error and continue with remaining queue)
-//              false: do not attempt to save, just close this document and continue with remaining queue
-// lock, save, close, next
+
+// opt.save
+// opt.close
 
 function Process ( opt ) {
   var doc = this;
@@ -110,20 +113,25 @@ function Process ( opt ) {
     if (!currentBase || !currentFull) {app.alert("Cannot determine current document path."); return; }
     var baseDir = dirname(currentFull);
 
-    var userDir = GetUserDir();
-    var outPath = join(userDir, currentBase);
+    var outDir  = join ( baseDir, "completed" );
+    var outPath = join ( outDir, currentBase );
 
      var entries   = getQueueEntries (baseDir);
      var eligibles = getEligibles (entries);
 
     if (opt.save) {
+
+      var s = getSerial ();                 
+      var inc = firstIncompleteQuestion (s);
+      if (inc != -1) { app.alert ("Not yet graded all questions!"); return; }
+
       if (TrustedFileExists(outPath)) { app.alert("NOT SAVING - file already has been processed :\n\n" + outPath ); } 
       else                     { try { TrustedSaveAs (outPath);} catch (eSave) { app.alert("Cannot save to:\n\n" + outPath + "\n\n" + "This usually means the user directory does not exist, is not writable, or the file is locked.\n\n" + "Acrobat error:\n" + eSave); }  }
     }
 
-    if (opt.close) { // On save error we still continue queueing to next eligible file.
-      doc.closeDoc(true);    // close document
-      if (global && global.openedByScript) {delete global.openedByScript[doc.path]} // delete opening time stamp
+    if (opt.close) {                                                                 // On save error we still continue queueing to next eligible file.
+      doc.closeDoc(true);                                                            // close this document
+      if (global && global.openedByScript) {delete global.openedByScript[doc.path];} // delete opening time stamp
      }
 
     if (opt.close || opt.save) {  // if we just closed or saved the file it is no longer eligible; remove it from list of eligibles; moving getEligibles down does not help since saving and closing is async and takes some time
@@ -139,13 +147,13 @@ function Process ( opt ) {
 
       if (!TrustedFileExists(nextPath)) {app.alert ("ERROR: Exam sheet " + nextPath + " contained in queue.txt file but missing in directory"); return;}
       try {
-        if (!global.openedByScript) {global.openedByScript = {};}   // ensure existence of a global time stamp tracker
-        global.openedByScript[nextPath] = (new Date()).getTime();  // store time stamp of opening the next 
-        var newDoc = app.openDoc( {cPath: nextPath, bHidden: false});  // app.alert ("Newly opened is: " + newDoc);
+        if (!global.openedByScript) {global.openedByScript = {};}        // ensure existence of a global time stamp tracker
+        global.openedByScript[nextPath] = (new Date()).getTime();        // store time stamp of opening the next 
+        var newDoc = app.openDoc( {cPath: nextPath, bHidden: false});    // app.alert ("Newly opened is: " + newDoc);
       }
-      catch (exe) {app.alert ("ERROR: exception opening " + nextPath + " due to: " + exe);}
+      catch (exe) {app.alert ("ERROR: exception opening " + nextPath + " due to: " + exe + " STACK: " + exe.stack);}
     }
-  } catch (e) {app.alert("ERROR: Process failed. \n\n Exception reported was:" + e);}
+  } catch (e) {app.alert("ERROR: Process failed. \n\n Exception reported was:" + e + " STACK: " + e.stack);}
 }
 
 \end{insDLJS}

@@ -29,11 +29,12 @@ ENTERMATRIKEL="$5"
 SHOWSUMMATION="$6"
 
 
-MY_DIR="klausuren/$EXAMID/"
+# Anchored at TOP_DIR, not at the current working directory: the script must
+# create its directories in the exam tree no matter where it is called from.
+MY_DIR="$TOP_DIR/klausuren/$EXAMID/"
 
 mkdir -p "$MY_DIR/build-corrections/"
 mkdir -p "$MY_DIR/corrections/$GRADER/"
-mkdir -p "$MY_DIR/corrections/"
 mkdir -p "$MY_DIR/pdf-exams-clean/"
 
 # directory where we have all the cleaned, perfect pdfs which will now
@@ -62,10 +63,41 @@ for file in "$DIR"/*.pdf; do
   echo "********** Command is: ${TOP_DIR}/driver/single.sh \"$EXAMID\" \"$GRADER\" \"$GRADING\" \"$SERIAL\" $SHOWBUTTONS $ENTERMATRIKEL $SHOWSUMMATION"
   ${TOP_DIR}/driver/single.sh "$EXAMID" "$GRADER" "$GRADING" "$SERIAL" $SHOWBUTTONS $ENTERMATRIKEL $SHOWSUMMATION
   echo "Command completed"
-
-  exit 1
-
 done
+
+
+# Build the grading queue for the trusted-JS workflow: one line per correction
+# PDF in the grader's directory. START.pdf is excluded, it is only the bootstrap
+# document and not an exam to be graded.
+# The queue is rebuilt from scratch on every run, so leftovers of a previous run
+# cannot survive in it.
+CORR_DIR="${TOP_DIR}/klausuren/${EXAMID}/corrections/${GRADER}"
+QUEUE_FILE="${CORR_DIR}/queue.txt"
+
+mkdir -p "$CORR_DIR"
+mkdir -p "$CORR_DIR/completed"
+
+
+: > "$QUEUE_FILE"
+queue_count=0
+
+# nullglob is set above, so an empty directory yields an empty list, not "*.pdf".
+# The glob is expanded in sorted order, which keeps the queue deterministic.
+for pdf in "$CORR_DIR"/*.pdf; do
+  pdfname="${pdf##*/}"
+  if [[ "$pdfname" == "START.pdf" ]]; then
+    continue
+  fi
+  echo "$pdfname" >> "$QUEUE_FILE"
+  queue_count=$((queue_count + 1))
+done
+
+echo ""
+echo "Wrote $QUEUE_FILE with $queue_count entry/entries"
+
+
+# copy in the START.pdf bootstrap file for graders using this approach
+cp "$TOP_DIR/sty/build/START.pdf" "${TOP_DIR}/klausuren/${EXAMID}/corrections/${GRADER}/"
 
 
 

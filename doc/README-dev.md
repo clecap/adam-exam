@@ -4,6 +4,7 @@
 * Is very fragile
 + Only is pre-ECMA15 JS without all the 'new' features.
 * After a \n in a JS file there must be a blank or the parser chokes
+* The PDF interface for Javascript might be spec-conformant but often is not what a programmer might expect.
 
 
 ## PDF
