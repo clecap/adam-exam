@@ -67,6 +67,11 @@ function getQueueEntries () {
 
 
 
+
+
+
+
+
 // given a list of entries return a list of ungraded entries (ie entries eligible for grading)
 function getEligibles (entries) {
   var doc = this;
@@ -87,25 +92,14 @@ function getEligibles (entries) {
 }
 
 
-// if the button exists, disable it
-function disableButton (name) {
-  var btn = this.getField(name);
-  if (btn) { btn.readonly = true;  btn.fillColor = color.ltGray; btn.textColor = color.dkGray; 
-  }
+
+
+
+function stillMissing () {
+  var entries   = getQueueEntries (); 
+  var eligibles = getEligibles (entries);     
+  return eligibles.length;
 }
-
-// if the button exists, enable it
-function enableButton (name, caption) {
-  var btn = this.getField(name);
-  if (btn) { btn.readonly = true;  btn.fillColor = color.white; btn.textColor = color.black; 
-    btn.buttonSetCaption (caption, 0);    btn.buttonSetCaption (caption, 1);    btn.buttonSetCaption (caption, 2);
-  }
-}
-
-
-
-
-
 
 
 
@@ -119,51 +113,75 @@ function Process ( opt ) {
   try {
     var currentBase = doc.documentFileName;
     var currentFull = norm(doc.path);
-    if (!currentBase || !currentFull) {app.alert("Cannot determine current document path."); return; }
     var baseDir = dirname(currentFull);
 
     var outDir  = join ( baseDir, "completed" );
     var outPath = join ( outDir, currentBase );
 
-     var entries   = getQueueEntries (baseDir);  app.alert ("entries " + entries);
-     var eligibles = getEligibles (entries);     app.alert ("eligibles " + eligibles);
+     var entries   = getQueueEntries (); 
+     var eligibles = getEligibles (entries);     
 
-    if (opt.save) {
+    if (opt.save) {                                // command was to SAVE the file
 
-      var s = getSerial ();                 
+      // first do a safety check whether really all questions have been graded
+      var s   = getSerial ();                 
       var inc = firstIncompleteQuestion (s);
       if (inc != -1) { app.alert ("Not yet graded all questions!"); return; }
 
-      if (TrustedFileExists(outPath)) { app.alert("NOT SAVING - file already has been processed :\n\n" + outPath ); } 
+      // second do a safety check whether file has already been saved earlier
+      if (TrustedFileExists(outPath)) { app.alert("NOT SAVING - file already has been processed. If you want to change grading, delete file in directory /complete :\n\n" + outPath ); } 
       else                     { try { TrustedSaveAs (outPath);} catch (eSave) { app.alert("Cannot save to:\n\n" + outPath + "\n\n" + "This usually means the user directory does not exist, is not writable, or the file is locked.\n\n" + "Acrobat error:\n" + eSave); }  }
+    
+      // remove file manually from the list of eligibles since it take a while for the file to settle on disc and we have no possibility to wait for that event
+      var idx = eligibles.indexOf( currentBase );      
+      if (idx !== -1) {eligibles.splice(idx, 1);}
+    
     }
 
     if (opt.close) {                                                                 // On save error we still continue queueing to next eligible file.
-      doc.closeDoc(true);                                                            // close this document
+      doc.closeDoc(true);                                                            // close this document without saving it // TODO: CHECK AND TEST NOT SAVING....
       if (global && global.openedByScript) {delete global.openedByScript[doc.path];} // delete opening time stamp
      }
 
-    if (opt.close || opt.save) {  // if we just closed or saved the file it is no longer eligible; remove it from list of eligibles; moving getEligibles down does not help since saving and closing is async and takes some time
-       var idx = eligibles.indexOf( currentBase );      
-       if (idx !== -1) {eligibles.splice(idx, 1);}
-    }
+    if (opt.next) { // command was to move on to the next item
+      if (eligibles.length) {  // we are NOT yet done, still some files eligibe for grading
 
-    if (opt.next) {
+        // app.alert ( entries.length + " exam sheets \n " + eligibles.length + " not yet graded" ); 
 
-    
-      app.alert ( entries.length + " exam sheets \n " + eligibles.length + " not yet graded" );  // ----- REPORT only in START 
-      var nextName = (eligibles.length != 0 ? eligibles[0] : null);
-      if (!nextName) {app.alert("No more eligible next PDF found."); return;}
-      var nextPath = join ( baseDir, nextName);
+        // Pick the first eligible entry that is NOT the document we are in right now (and might be in the process of closing)
+        // Re-opening the current document would either do nothing or fight with the close that may still be in progress, so it is skipped explicitly here.
+        var nextName = null;
+        for (var k = 0; k < eligibles.length; k++) {
+          if (eligibles[k] !== currentBase) { nextName = eligibles[k]; break; }
+        }
 
-      if (!TrustedFileExists(nextPath)) {app.alert ("ERROR: Exam sheet " + nextPath + " contained in queue.txt file but missing in directory"); return;}
-      try {
-        if (!global.openedByScript) {global.openedByScript = {};}        // ensure existence of a global time stamp tracker
-        global.openedByScript[nextPath] = (new Date()).getTime();        // store time stamp of opening the next 
-        var newDoc = app.openDoc( {cPath: nextPath, bHidden: false});    // app.alert ("Newly opened is: " + newDoc);
+ 
+        if (!nextName) {  // this means we still have another eligible docu but the only one is exactly this document
+          if (opt.skipnext) { app.alert ("Cannot 'Skip & Next' since this is the last sheet to grade. \n  Grade it or 'Skip & Stop' "); return;}
+          else { 
+            app.alert ("SHOULD THAT REALLY HAPPEN??? we get: " + nextName);
+          }
+        }
+
+        var nextPath = join ( baseDir, nextName);
+
+        if (!TrustedFileExists(nextPath)) {app.alert ("ERROR: Exam sheet " + nextPath + " contained in queue.txt file but missing in directory"); return;}
+        try {
+          if (!global.openedByScript) {global.openedByScript = {};}        // ensure existence of a global time stamp tracker
+          global.openedByScript[nextPath] = (new Date()).getTime();        // store time stamp of opening the next 
+          // app.alert ("attempting to open: " + nextPath);
+          var newDoc = app.openDoc( {cPath: nextPath, bHidden: false});    // app.alert ("Newly opened is: " + newDoc);
+        }
+        catch (exe) {app.alert ("ERROR: exception opening " + nextPath + " due to: " + exe + " STACK: " + exe.stack);}
       }
-      catch (exe) {app.alert ("ERROR: exception opening " + nextPath + " due to: " + exe + " STACK: " + exe.stack);}
+      else {  // we are done - no more files eligible for grading
+        app.alert ("DONE grading " + entries.length + " sheets \n  Thank you!");
+      }
     }
+
+
+
+
   } catch (e) {app.alert("ERROR: Process failed. \n\n Exception reported was:" + e + " STACK: " + e.stack);}
 }
 

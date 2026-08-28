@@ -9,7 +9,6 @@
 
 \begin{insDLJS}{start}{Start}
 function mainStart() {
-  app.alert ("started");
   try {
     var doc = this;
     var missingSheets = false;     // have missing sheets been detected?
@@ -22,12 +21,11 @@ function mainStart() {
     var outDir  = join ( baseDir, "completed" );
     var outPath = join ( outDir, currentBase );
 
-    app.alert ("start: before");
-    var entries = getQueueEntries ();  app.alert ("one");
-    var eligibles = getEligibles (entries); app.alert ("two");
+    var entries = getQueueEntries ();  
+    var eligibles = getEligibles (entries); 
 
     if (eligibles.length != 0) { app.alert ( entries.length + " exam sheets referenced in queue file \n\n " + eligibles.length + " not yet graded\n\n Continuing with grading now..." ); }
-    else { app.alert ( entries.length + " exam sheets found \n\n All have been greaded." ); return; }
+    else { app.alert ( entries.length + " exam sheets found \n\n All have been graded." ); return; }
 
     for (var j = 0; j < eligibles.length; j++) {  // loop over all eligibles 
       var nextFile = eligibles[j];

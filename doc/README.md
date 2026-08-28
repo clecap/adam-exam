@@ -27,21 +27,21 @@ Grading takes place with the **Adobe PDF Reader**. It uses the JavaScript and fo
 
 <details><summary><b style='font-size:larger'>Basic Workflows</b></summary>
 
-There are three strategies for grading, which provide varying support for convenience and scalability of your grading work. 
+There are three strategies for grading, which provide varying degrees of support for convenience and scalability of your grading work. 
 
 The strategies require some adjustment of the preferences of your Adobe PDF Reader. 
 
-The strategies must not be mixed.
+The strategies **must** not be mixed.
 
 | Strategy | Scroll to next question <br>to be graded | Open next sheet <br> to be graded |
 | -------- | ---------------------------------------- | --------------------------------- |
 | Manual   | User                                     | User                              |
 | Semi     | Automatic                                | User                              |
-| Auto     | Automatic                                | Automatic                         |
+| Auto  (Recommended)   | Automatic                                | Automatic                         |
 
 </details>
 
-<details><summary><b style='font-size:larger'>Preference Settings for Adobe PDF Reader</b></summary>
+<details><summary><b style='font-size:larger'>Preference Settings for Adobe PDF Reader (Read me first!)</b></summary>
 
 ##### Manual Strategy
 * **Necessary:** Preferences -> JavaScript -> Enable Acrobat JavaScript
@@ -82,11 +82,23 @@ Enable Enhanced Security: Off
 
 
 
-<details><summary><b style='font-size:larger'>Auto Grading</b></summary>
+<details><summary><b style='font-size:larger'>Auto Grading (Recommended)</b></summary>
 
-1 Make a directory named ```adam-exam``` somewhere on your local machine.
-1 Download the 
+1. Make a directory named ```adam-exam``` somewhere on your local machine.
+1. Download the entire directory with your name into this directory. This directory should contain:
+    1. one or more exam files
+    1. a file called ```queue.txt```, which contains a list of exam files to be graded.
+    1. a file called ```START.pdf```, which **always** is the entry point into the grading process.
+    1. a directory called ```completed/```, which at the end will contain all graded exam files.
+1. Open the file ```START.pdf``` with Adobe Reader and follow the instructions.
 
+**Pausing:** You can pause and restart the grading process at any time. When restarting, again open ```START.pdf```
+
+**Finished:** When you have completed the grading, all graded sheets reside in the subdirectory - upload this subdirectory to the server.
+
+**Correcting:** When you want to correct a grading: 
+1. Delete the incorrectly graded file in directory ```completed/```
+1. Open ```START.pdf``` and follow the instructions.
 </details>
 
 
@@ -120,6 +132,15 @@ Adjustments of the grading table can be implemented in file ```js/inject.js``` i
 When adjusting the grading table: Note that percentages are rounded usign the ceiling function. This can have an effect on the grading table.
 
 </details>
+
+
+
+<details><summary><b style='font-size:larger'>Some Remarks</b></summary>
+* The condition of being inside a subdirectory of a directory ```adam-exam/``` ensures that the additional functionality implemented in ```trusted.js``` is available only to PDF files of this application. In this sense, it serves as a security sandbox.
+* Some constructions in the workflow are the consequence of the other security mechanisms imposed by Adobe PDF Reader. For example, there is not function for traversing a directory. Thus, the file ```queue.txt```is used.
+</details>
+
+
 
 # Installation
 

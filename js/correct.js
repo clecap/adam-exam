@@ -2,42 +2,6 @@
 \begin{insDLJS}{myJS}{Summation}
 
 
-// if document has not been opened by the START script 
-// and is inside a directory which contains a START.pdf file
-// then issue a warning and close again
-function checkOpenedByScript (doc) {
-  var path        = norm(doc.path);
-  var baseDir     = dirname(path);
-  if (!baseDir) { app.alert ("ERROR: Could not obtain baseDir in checkOpenedByScript"); return;}
-  var startPath   = join (baseDir, "START.pdf");
-  var startExists = TrustedFileExists (startPath);
-  // app.alert ("startExists=" + startExists + " at " + startPath);
-
-  var openedByScript = false;                                                // default is false
-  if (global && global.openedByScript && global.openedByScript[path]) {
-    var ageMs = (new Date()).getTime() - global.openedByScript[path];        // optional: expire it quickly to avoid false positives
-    delete global.openedByScript[path];
-    openedByScript = (ageMs < 5000);
-  }
-  // app.alert ("openedByScript=" + openedByScript);
-  
-  if (startExists && !openedByScript) {
-    app.alert ("ERROR: Adam PDF file  in a directory containing a START.pdf and not opened by START.pdf \n\n Please start Adam grading by opening START.pdf in workflow directory");
-
-    var r = app.alert({cMsg: "Override warning?\n\n Yes keeps document open \n\n No closes it. ", cTitle: "Confirm Ignore?", nIcon: 2, nType: 2 });
-
-    if ( r===3 ) {                  // NO was selected
-        this.dirty=false;
-        this.closeDoc (true);       // close the document
-        throw "Opening-Exception";  // signal the caller to shut down since we cannot do this here 
-    }
-    else {}
-  }
-}
-
-
-
-
 
 function computeAll(q, s) {
   init();
@@ -72,6 +36,7 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
   var isCompleted;
   
   discVal = GET_FIELD ("D" + q + "-" + s).value;  // value of field containing points for discretionary grading, if used
+  app.alert ("discVal is " + discVal);
   if (typeof discVal === "number" ) {    // app.alert ("Using discretionary grading for question " + q + " serial " + s);
       sum = discVal;
       isCompleted = true;                  // discretionary is complete by definition
@@ -110,7 +75,7 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
 
   // set the calculated sum of points for question q of serial s into the box displaying the points for this question
   qpField = GET_FIELD ("punkte"+q + "-" + s);
-  qpField.value = sum;
+  qpField.value = sum; app.alert ("punkte set to " + sum);
 
   colorify (q, s, isCompleted);
   return sum;
@@ -136,11 +101,11 @@ function writeAll (s) {
   var rounded            = Math.ceil ( raw * 10) / 10;     //  rounded percentage, ceiling
 
   // punktesume, prozent, note
-  punkteSummeField = GET_FIELD ("punktesumme-" + s);    punkteSummeField.value = punkteSumme;
+  punkteSummeField = GET_FIELD ("punktesumme-" + s);   punkteSummeField.value = punkteSumme; 
   prozentField     = GET_FIELD ("prozent-" + s);       prozentField.value     = rounded;
-  noteField        = GET_FIELD ("note-" + s);   noteField.value        = percentToMark ( rounded );
+  noteField        = GET_FIELD ("note-" + s);          noteField.value        = percentToMark ( rounded );
   
-  punkteSummeField.strokeColor = prozentField.strokeColor = noteField.strokeColor = color.green;  // TODO: really need ??
+ // punkteSummeField.strokeColor = prozentField.strokeColor = noteField.strokeColor = color.green;  // TODO: really need ??
 
 }
 
@@ -185,7 +150,7 @@ function GET_FIELD (name) {
 
 
 
-/** UI HANDLING FUNCTIONS handle specific UI situations **/
+/** UI EVENT HANDLERS **/
 
 function pointClick (q, s, e, val) {  // called by a click into a point carrying checkbox
   // app.alert (e.target);
@@ -194,12 +159,9 @@ function pointClick (q, s, e, val) {  // called by a click into a point carrying
   e.target.attachedAdam = val;        // attach value, since the value, exportValue mechanism of PDF is not supported in hyperref
   // app.alert ("now setting completed to false");
   setCompleted (q, s, false); 
-  // app.alert ("done");
   uncheckDisc(q, s);
   computeAll(q, s);
-  //resetRadio (q, s);
   colorify (q, s, false);
-  
 }
 
 
@@ -210,9 +172,11 @@ function injectValue (q, s, e, val) {  // need this to attach value also for the
 
 function completedClick(q, s, e) {   // called when a completion checkbox was clicked for question number 
   computeAll(q, s);
-  goFirstIncomplete (s);
+  app.setTimeOut ("goFirstIncomplete (s)", 500);  // a bit of a timeout to allow user a check
+ // goFirstIncomplete (s);
 }
 
+// TODO: maybe deprecate. we no longer sue all buttons
 function allButton(q, s, e) {   // called when an allbutton was clicked for question number q
   uncheckDisc (q,s);
   setAllCheckForQ (q, s, true);
@@ -225,23 +189,10 @@ function onblur (q, s, e) { // called when losing the focus of the discretionary
   goFirstIncomplete (s);
 }
 
-function buttonFocusOn(e) {   // make keyboard focus obvious
-  var f = e.target;
-  f.borderStyle = border.d;  // dashed border
-}
-
-function buttonFocusOff(e) {
-  var f = e.target;
-  // restore normal appearance (adjust to your defaults)
-  //f.strokeColor = color.red;
-  //f.lineWidth = 2;
-  f.borderStyle = border.s;
-}
 
 
 
-
-// DEPRECATE also in field ???? TODO: 
+// DEPRECATE also in field ???? TODO:   MUST ALSo REMOVE in adam-exam class file first 
 function numericKS(q, s, e) {  // called when a value has been entered  /changed into a discretionary grading field
 
   return;
@@ -259,7 +210,7 @@ function numericKS(q, s, e) {  // called when a value has been entered  /changed
   }
 }
 
-
+// called after enter is pressed in the discretionary grading point field
 function numericValidate(q, s, e) {
   //app.alert ("numericValidate called on value: " + e.value);
   var val = e.value.replace(/^\s+|\s+$/g, ""); // trim (ES3-safe)
@@ -273,28 +224,22 @@ function numericValidate(q, s, e) {
     e.rc = false;
   }
   else { // we have a non-empty value which we shall use
+    app.alert ("value is: " + val + " and " + e.value);
     setAllCheckForQ (q, s, false);  // uncheck all point-checkboxes 
     resetRadio (q, s);
     setCompleted (q, s, true);
-  //  app.alert ("will compute");
     computeAll (q,s);
-  //  app.alert ("did compute");
     colorify (q,s, true);
- //   app.alert ("did color");
-    goFirstIncomplete (s);
+    app.setTimeOut ("goFirstIncomplete (s)", 500);
    }
 }
 
 
-
-
-
 function radioChange (q, s, e) {
-  var name = "grp" + q + "-" + s;   // app.alert (name);
-  var field = this.getField(name);  if (!field) { app.alert ("ERROR: radioChange could not find field: " + name);}   
+  var field = GET_FIELD ("grp" + q + "-" + s);
   var v = field.value;
   uncheckDisc (q, s);
-  setCompleted (q, s, true);
+//  setCompleted (q, s, true); // do NOT considered a bonused function finished automagically
   computeAll(q, s);
   goFirstIncomplete (s);
 }
@@ -358,21 +303,24 @@ function colorify (q, s, flag) {
   field = GET_FIELD ("grp" + q + "-" + s);     field.strokeColor = newColor;
   field = GET_FIELD ("D" + q + "-" + s);       field.strokeColor = newColor;
   field = GET_FIELD ("grader" + q + "-" + s);  field.strokeColor = newColor;
+  field = GET_FIELD ("punkte"+ q + "-" + s);   field.strokeColor = newColor;
+    field.fillColor = newColor;
 }
 
 
-// if the button exists, disable it
+// if the button exists, disable it - else ignore command
 function disableButton (name) {
   var btn = this.getField(name);
   if (btn) { btn.readonly = true;  btn.fillColor = color.ltGray; btn.textColor = color.dkGray; 
   }
 }
 
-// if the button exists, enable it
+// if the button exists, enable it - else ignore command
 function enableButton (name, caption) {
   var btn = this.getField(name);
-  if (btn) { btn.readonly = true;  btn.fillColor = color.white; btn.textColor = color.black; 
+  if (btn) { btn.readonly = false;  btn.fillColor = color.white; btn.textColor = color.black; 
     btn.buttonSetCaption (caption, 0);    btn.buttonSetCaption (caption, 1);    btn.buttonSetCaption (caption, 2);
+    btn.strokeColor = color.green;
   }
 }
 
@@ -388,6 +336,7 @@ function init () {                    // initialize variables
 
   disableButton ("savenext");
   disableButton ("savestop");
+  enableButton ("skipstop", "Skip & Stop");  // to fix in the interest of unique fonts in all  3 buttons  // TODO: might move out of init to main initialoization
 
   var parts, question, name, f;
   numQuestions = 0;
@@ -568,22 +517,31 @@ function firstPageOfField (fieldName) { // returns the first page number in term
 }
 
 
-
+function isFullyAutomated () {  // return true if runnign in fully automated mode using START.pdf
+  if ( global && global.openedByScript && global.openedByScript[this.path] ) {return true;} else {return false;}
+}
 
 
 
 function goFirstIncomplete (s) {  // navigate to the page with the first incompletely graded question for serial s, if s not defined, obtain it
                                   // return true if navigating to a page 
+
   if (s === null || s === undefined) {s = getSerial();}
   var q = firstIncompleteQuestion (s);
 
   if (q === 0 || q === undefined || q === null) { throw new Error ("goFirstIncomplete obtained illegal value for q");}
 
   if (q == -1) {   // all questions graded, nothing to do than to prepare exit modes
- 
-    enableButton ("savenext", "Save & Next...");  
+    enableButton ("savenext", "Save & Next of " + (stillMissing()-1) + "...");  
     enableButton ("savestop", "Save & Stop");
-       app.alert ("All questions have been graded for serial " + s + "\n\n Please save result ");    
+
+  if (isFullyAutomated()) {  // in fully automated mode we need no info to the user
+
+  }
+  else {  // in semi automated mode we remind the user to save
+      app.alert ("All questions have been graded for serial " + s + "\n\n Please save result ");   
+  }
+
     return;
   }
 
@@ -623,8 +581,14 @@ function getSerial () {  // obtain the serial number of the PDF
 
 var numQuestions;  
 var completed;       // maps number of question to boolean value indicating if this question has been graded completed  // TODO: deprecate ????
+
 var qP;              // maps the number of question to the page where this question is placed or starts to be placed
+// TODO: do we still need this ??
+
 var sums;            // maps the number of question to the sum of points achieved at this question
+// TODO: do we still need this?
+
+
 var Z;               // maps the number of question to a flag indicating if the zero point box is ticked
 var D;               // maps the number of question to a flag indicating i the discretionary grading is used in this question
 

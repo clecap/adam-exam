@@ -306,13 +306,6 @@
   \hspace*{0.2cm}% \parbox{0.2\linewidth}{{\color{red}\textbf{Bewertet}} }% 
   {{\color{\textcolor}\textbf{Fertig}}}
   %
-%  BUTTON FO ACTIVATING ALL
-%  \hspace*{0.6cm}%
-%  \mbox{
-%  \PushButton[name=A\currentQuestion-\myexamserial,height=1.0cm,width=3cm,bordercolor=\bordercolor,color={red},borderwidth=2,
-%    onblur={buttonFocusOff(event)},onfocus={buttonFocusOn(event)},
-%    readonly=\readonlyflag,onclick={ allButton(\currentQuestion,"\myexamserial",event); } ]{\color{\textcolor} ALL}
-%  }
   %
   %
   \hspace*{1cm}
@@ -1047,13 +1040,13 @@
  % \TextField[name=nextjob,height=1.0cm,width=18cm,readonly=true,bordercolor={yellow},borderwidth=3,onfocus={goFirstIncomplete();}]{\phantom{XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX}}%
  % \end{textblock*}
   \begin{textblock*}{270mm}(198mm,280mm)
-    \PushButton[name=savenext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save:true, close: true, next: true} );}]{Save \& Next...}%
+    \PushButton[name=savenext,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {save:true, close: true, next: true} );}]{\makebox[6cm][c]{Save \& Next...}}%
     \hspace*{1cm}
-    \PushButton[name=skipnext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save: false, close:true, next:true} );}]{Skip \& Next...}
+%    \PushButton[name=skipnext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {close:true, next:true, skipnext:true} );}]{Skip \& Next...}
+%    \hspace*{1cm}
+    \PushButton[name=savestop,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {save: true, close: true} );}]{\makebox[6cm][c]{Save \& Stop}}
     \hspace*{1cm}
-    \PushButton[name=savestop,height=1.0cm,width=3cm,bordercolor={orange},color={red},borderwidth=3,onclick={ Process ( {save: true, close: true, next:false} );}]{\bf Save \& Stop}
-    \hspace*{1cm}
-    \PushButton[name=skipstop,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save: false, close: true, next:false} );}]{\bf Skip \& Stop}
+    \PushButton[name=skipstop,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {close: true} );}]{\makebox[6cm][c]{Skip \& Stop}}
   \end{textblock*}   
   \begin{textblock*}{70mm}(198mm,2mm)
     Serial: \myexamserial
