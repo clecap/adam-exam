@@ -25,7 +25,7 @@ function cloneArray(a) {
   return b;
 }
 
-
+function ASSERT (bC, str) { if (!bC) {throw new Error (str);} }
 
 
 function percentToMark (p) {
@@ -45,8 +45,11 @@ function percentToMark (p) {
 }
 
 
-// return a list of files to look at from the diretory file queue.txt; look inside directory baseDir
-function getQueueEntries (baseDir) {
+// return a list of files to look at from the manifest file queue.txt; look inside directory baseDir
+function getQueueEntries () {
+  var currentFull = norm(this.path);   ASSERT (currentFull, "getQueueEntries could not obtain currentFull");
+  var baseDir = dirname(currentFull);  ASSERT (baseDir,     "getQueueEntries could not obtain baseDir");
+
   var stm;
   try{ stm = ReadQueueFile (baseDir);} catch (x) { throw x;} // rethrow for proper UI exit; has already been notified to user in ReadQueueFile
   if (!stm) {app.alert("ERROR: Cannot read queue file.\n\n Fix this and restart"); throw "getQueueEntries could not read queue file"; }  
@@ -77,7 +80,7 @@ function getEligibles (entries) {
   var entry;
   for (var step = 0; step < entries.length; step++) {
     entry = entries[step];
-    if (TrustedFileExists(join(completedDir, entry))) continue;
+    if (TrustedFileExists(join(completedDir, entry))) continue;   // skip, since file is in the completed directory
     eligibles.push ( entry);
   }
   return eligibles;
@@ -92,10 +95,16 @@ function disableButton (name) {
 }
 
 // if the button exists, enable it
-function enableButton (name) {
+function enableButton (name, caption) {
   var btn = this.getField(name);
-  if (btn) { btn.readonly = true;  btn.fillColor = color.white; btn.textColor = color.black; }
+  if (btn) { btn.readonly = true;  btn.fillColor = color.white; btn.textColor = color.black; 
+    btn.buttonSetCaption (caption, 0);    btn.buttonSetCaption (caption, 1);    btn.buttonSetCaption (caption, 2);
+  }
 }
+
+
+
+
 
 
 
@@ -116,8 +125,8 @@ function Process ( opt ) {
     var outDir  = join ( baseDir, "completed" );
     var outPath = join ( outDir, currentBase );
 
-     var entries   = getQueueEntries (baseDir);
-     var eligibles = getEligibles (entries);
+     var entries   = getQueueEntries (baseDir);  app.alert ("entries " + entries);
+     var eligibles = getEligibles (entries);     app.alert ("eligibles " + eligibles);
 
     if (opt.save) {
 
@@ -140,6 +149,8 @@ function Process ( opt ) {
     }
 
     if (opt.next) {
+
+    
       app.alert ( entries.length + " exam sheets \n " + eligibles.length + " not yet graded" );  // ----- REPORT only in START 
       var nextName = (eligibles.length != 0 ? eligibles[0] : null);
       if (!nextName) {app.alert("No more eligible next PDF found."); return;}

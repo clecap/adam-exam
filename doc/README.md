@@ -27,7 +27,11 @@ Grading takes place with the **Adobe PDF Reader**. It uses the JavaScript and fo
 
 <details><summary><b style='font-size:larger'>Basic Workflows</b></summary>
 
-You can use three strategies for grading, which provide varying support for convenience and scalability of your grading work. The strategies may require some adjustment of the preferences of your Adobe PDF Reader.
+There are three strategies for grading, which provide varying support for convenience and scalability of your grading work. 
+
+The strategies require some adjustment of the preferences of your Adobe PDF Reader. 
+
+The strategies must not be mixed.
 
 | Strategy | Scroll to next question <br>to be graded | Open next sheet <br> to be graded |
 | -------- | ---------------------------------------- | --------------------------------- |
@@ -56,13 +60,10 @@ You can use three strategies for grading, which provide varying support for conv
  This JavaScript file provides some additional trusted functionality to the Adobe PDF Reader.
  The use of these functions is limited to subdirectories of a directory called ```adam-exam```.
 
+
+TODO !!!!!!!!!
 Security 8Enhanced). Enable Protected mode at startup: Off
 Enable Enhanced Security: Off
-
-- Preferences -> FullScreen -> Alert when document requests full screen = Off
-- Preferences-> Generative AI -> Enable Generative Ai features in acrobat = Off
-- Preferences -> General -> Show Online Storgae when opening files = Off
-- Preferences -> General -> Show me messages when I launch ... = Off
 
   Restart the adobe PDF Reader when you made these settings.
 
@@ -82,6 +83,9 @@ Enable Enhanced Security: Off
 
 
 <details><summary><b style='font-size:larger'>Auto Grading</b></summary>
+
+1 Make a directory named ```adam-exam``` somewhere on your local machine.
+1 Download the 
 
 </details>
 

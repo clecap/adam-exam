@@ -2,9 +2,6 @@
 \begin{insDLJS}{myJS}{Summation}
 
 
-
-
-
 // if document has not been opened by the START script 
 // and is inside a directory which contains a START.pdf file
 // then issue a warning and close again
@@ -29,9 +26,9 @@ function checkOpenedByScript (doc) {
 
     var r = app.alert({cMsg: "Override warning?\n\n Yes keeps document open \n\n No closes it. ", cTitle: "Confirm Ignore?", nIcon: 2, nType: 2 });
 
-    if ( r===1 ) {
+    if ( r===3 ) {                  // NO was selected
         this.dirty=false;
-        this.closeDoc (true);
+        this.closeDoc (true);       // close the document
         throw "Opening-Exception";  // signal the caller to shut down since we cannot do this here 
     }
     else {}
@@ -66,21 +63,21 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
   var val;
   var discVal;        // field containing points in discretionary grading case
   var pointName, pointField, pointVal;
-  var qpName, qpField, qpVal;              // field displaying the points for a question
+  var qpField;                             // field displaying the points for a question
   var bmName, bmField, bmVal;              // bonus malus adjustment
 
   var sum = 0;
 
   // determine status of FERTIG checkbox
-  var completed;
+  var isCompleted;
   
   discVal = GET_FIELD ("D" + q + "-" + s).value;  // value of field containing points for discretionary grading, if used
   if (typeof discVal === "number" ) {    // app.alert ("Using discretionary grading for question " + q + " serial " + s);
       sum = discVal;
-      completed = true;                  // discretionary is complete by definition
+      isCompleted = true;                  // discretionary is complete by definition
   }
   else {          // app.alert ("Using structured grading for question " + q + " serial " + s);
-    completed = GET_FIELD ("Z" + q + "-" + s).isBoxChecked(0);  // structured is complete when the complete box is set
+    isCompleted = GET_FIELD ("Z" + q + "-" + s).isBoxChecked(0);  // structured is complete when the complete box is set
     for (var i=1; i< 500; i++) { // summing up points, speculatively assuming a max of 500 options, breaking out when no more is found
       pointName = q + "X" + i + "-" + s;
       pointField = this.getField (pointName); if (!pointField) { break; }  // done with all we might be using
@@ -111,62 +108,40 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
 
   if (sum < 0) {sum=0;}  // german exam regulations forbid negative points in one task affecting other tasks
 
-  // set the calculated sum of points for this question q of serial s into the box displaying the points for this entire question
-  qpName = "punkte"+q + "-" + s;
-  qpField =this.getField(qpName); if (!qpField) { throw new Error ("did not find: " + qpName);}
+  // set the calculated sum of points for question q of serial s into the box displaying the points for this question
+  qpField = GET_FIELD ("punkte"+q + "-" + s);
   qpField.value = sum;
 
-  colorify (q, s, completed);
+  colorify (q, s, isCompleted);
   return sum;
 }
 
 
 
-
-
-
-// write all fields for serial s
+// write punkteSumme, prozente and note for serial s
 function writeAll (s) {
   var punkteSumme = 0; 
-  var allDone   = true;
-  var field, name, punkteSummeField, prozentField, noteField, val;
+  var field, punkteSummeField, prozentField, noteField, val;
 
-  for (var i = 1; i <= numQuestions; i++) {
-    name = "punkte"+i + "-" + s;
-    field =this.getField(name);               // get the field displaying the sum of the points for this question number
-   if (field) {                               // and if we really got a field object, then fill in the sum
+  for (var i = 1; i <= numQuestions; i++) {          
+    field = GET_FIELD ("punkte"+i + "-" + s);  // get the field displaying the sum of the points for this question number
      val = field.value;
      if (typeof val != "number") {val = 0;}   // uninitialized fields may have string value and must be sanitized
-     if (typeof punkteSumme != "number") {app.alert ("writeAll: assertion error: punkteSumme is not numeric at 1");}
+     ASSERT ( typeof punkteSumme == "number", "writeAll: assertion error: punkteSumme is not numeric at 1");
      punkteSumme += val;  
-     if (typeof punkteSumme != "number") {app.alert ("writeAll: assertion error: punkteSumme is not numeric at 2");}
-   }
-   else {app.alert ("writeAll: Could not find field for points " + name);}         
+     ASSERT (typeof punkteSumme == "number", "writeAll: assertion error: punkteSumme is not numeric at 2");
   }
   
+  var raw                = (100*punkteSumme) / maxPoints;  //  raw percentage
+  var rounded            = Math.ceil ( raw * 10) / 10;     //  rounded percentage, ceiling
+
   // punktesume, prozent, note
-  punkteSummeField = this.getField ("punktesumme-" + s); if ( !punkteSummeField  ) {
-    app.alert ("Error: Cannot find field punktesumme-"+s);
-  }
-  prozentField     = this.getField ("prozent-" + s);     if ( !prozentField      ) {
-    app.alert ("Error: Cannot find field prozent-"+s);    
-  }
-  noteField        = this.getField ("note-" + s);        if ( !noteField         ) {
-    app.alert ("Error: Cannot find field note-"+s);       
-  }
-  punkteSummeField.value = punkteSumme;
-  var raw                = (100*punkteSumme) / maxPoints;  //   --------------------------
-  var rounded            = Math.ceil ( raw * 10) / 10;
-  prozentField.value     = rounded;
+  punkteSummeField = GET_FIELD ("punktesumme-" + s);    punkteSummeField.value = punkteSumme;
+  prozentField     = GET_FIELD ("prozent-" + s);       prozentField.value     = rounded;
+  noteField        = GET_FIELD ("note-" + s);   noteField.value        = percentToMark ( rounded );
+  
+  punkteSummeField.strokeColor = prozentField.strokeColor = noteField.strokeColor = color.green;  // TODO: really need ??
 
-  noteField.value        = percentToMark ( rounded );  //   --------------------------  
-  punkteSummeField.strokeColor = prozentField.strokeColor = noteField.strokeColor = ( allDone ? color.green : color.red);
-
-//  var stringIncomplete = listOfIncomplete ();
-//  var nextjobField = this.getField("nextjob");
-  // nextjobField.alignment="left";
-  // nextjobField.buttonSetCaption(stringIncomplete);
-//  nextjobField.value = stringIncomplete;
 }
 
 
@@ -179,10 +154,7 @@ function writeAll (s) {
 
 
 
-/** HELPERS **/
-
-
-
+/** HELPER FUNCTIONS **/
 
 function pdfStringToNumber(v) {
   if (v === null || v === undefined) {return 0;}
@@ -201,16 +173,19 @@ function pdfStringToNumber(v) {
 }
 
 
+function GET_FIELD (name) {
+  var field;
+  field = this.getField (name); 
+  if (!field) {throw new Error ("Did not find field: " + name);}
+  return field;
+}
+
+
+
 
 
 
 /** UI HANDLING FUNCTIONS handle specific UI situations **/
-
-
-
-
-
-
 
 function pointClick (q, s, e, val) {  // called by a click into a point carrying checkbox
   // app.alert (e.target);
@@ -227,10 +202,10 @@ function pointClick (q, s, e, val) {  // called by a click into a point carrying
   
 }
 
+
 function injectValue (q, s, e, val) {  // need this to attach value also for the cases where we do not click but merely activate the ALL button
   e.target.attachedAdam = val; 
 }
-
 
 
 function completedClick(q, s, e) {   // called when a completion checkbox was clicked for question number 
@@ -262,6 +237,8 @@ function buttonFocusOff(e) {
   //f.lineWidth = 2;
   f.borderStyle = border.s;
 }
+
+
 
 
 // DEPRECATE also in field ???? TODO: 
@@ -326,17 +303,10 @@ function radioChange (q, s, e) {
 
 
 
-
-
-
-
-/** UI MODIFICATION FUNCTIONS change UI to make it consistent **/
-
-
+/** UI MODIFICATION FUNCTIONS: Functions which change the UI, partially to make it consistent **/
 
 function resetRadio(q, s) { // reset radio group adjustment for question q to its default
-  var name = "grp" + q + "-" + s;
-  var field = this.getField(name); if (!field) {app.alert ("ERROR: resetRadio did not find field: " + name);}
+  var field = GET_FIELD ("grp" + q + "-" + s);
   field.value = "Off";
 }
 
@@ -351,36 +321,23 @@ function setAllCheckForQ (q, s, flag) {  // uncheck all point-checkboxes for que
   }
 }
 
-
-function setCompleted (q, s, flag) {  // uncheck all completed checkboxes for question q
-  var name = "Z"+q + "-" + s;
-  var field = this.getField (name);     if (!field) { app.alert ("ERROR: setCompleted failed to find field: " + name);}
+function setCompleted (q, s, flag) {  // uncheck/uncheck all completed checkboxes for question q
+  var field = GET_FIELD ("Z"+q + "-" + s);
   field.value = (flag ? "Yes" : "Off" );
 }
 
 
 function uncheckDisc (q, s) {  //  empty any discretionary field for question q
-  var name = "D"+q+"-"+s;
-  var field = this.getField (name);  if (!field) { app.alert ("ERROR: uncheckDisc failed to find field: " + name);}
+  var field = GET_FIELD ("D"+q+"-"+s);  
   field.value="";
 }
 
 
 function clearQuestionPoints (q, s) { // clears the field exhibit the number of points for question q in serial s
-  var name = "punkte"+q + "-" + s;
-  var field = this.getField (name); if (!field) { app.alert("ERROR: clearQuestionPoint failed to find field: " + name);}
+  var field = GET_FIELD ("punkte"+q + "-" + s);
   field.value = "";
   field.strokeColor = color.red;
 }
-
-
-function GET_FIELD (name) {
-  var field;
-  field = this.getField (name); 
-  if (!field) {throw new Error ("Did not find field: " + name);}
-  return field;
-}
-
 
 
 
@@ -404,12 +361,20 @@ function colorify (q, s, flag) {
 }
 
 
+// if the button exists, disable it
+function disableButton (name) {
+  var btn = this.getField(name);
+  if (btn) { btn.readonly = true;  btn.fillColor = color.ltGray; btn.textColor = color.dkGray; 
+  }
+}
 
-
-
-
-
-
+// if the button exists, enable it
+function enableButton (name, caption) {
+  var btn = this.getField(name);
+  if (btn) { btn.readonly = true;  btn.fillColor = color.white; btn.textColor = color.black; 
+    btn.buttonSetCaption (caption, 0);    btn.buttonSetCaption (caption, 1);    btn.buttonSetCaption (caption, 2);
+  }
+}
 
 
 
@@ -452,6 +417,8 @@ function init () {                    // initialize variables
 }
 
 
+// TODO: deprecate
+/*
 function printStatus () {
   app.alert ("Number of questions=" + numQuestions );
   var txt ="Questions completed in grading: "; 
@@ -464,7 +431,7 @@ function printStatus () {
   for (var i =1; i <= numQuestions; i++) { txt += " " + sums[i]; } 
   app.alert (txt);
 }
-
+*/
 
 
 
@@ -479,26 +446,42 @@ function printStatus () {
 
 
 
+// TEST if there is a value in discretionary field
+function hasDiscretionary (q,s) {
+  discVal = GET_FIELD ("D" + q + "-" + s).value;  // value of field containing points for discretionary grading, if used
+  if (typeof discVal === "number" ) { return true; } else {return false;}
+}
+
+
+
+
 
 function isQuestionGraded (q, s) { // given a serial number s and a question number q, return if the question q has been graded for serial s
+
   var name = "punkte" + q + "-" + s;
-  var field = this.getField (name); if (!field) {app.alert ("ERROR: isQuestionGraded could not find field: " + name ); return false;}// TODO: Error flow
+  var field = this.getField (name); if (!field) { throw new Error ("ERROR: isQuestionGraded could not find field: " + name ); }
   var val = field.value;
-  //app.alert ("isQuestionGraded " + q + " " + s + " " + typeof val + " " + val);
+
   if (val === undefined || val === null) {return false;}
   if (typeof val === "string") { val=val.trim(); }
   if (val === "") {return false;}
   val = Number (val);
-  if (isNaN (val)) { app.alert ("ERROR: isQuestionGraded found a NaN for field: " + name); return false;}// TODO: Error flow
-  if (val < 0) {  app.alert ("ERROR: isQuestionGraded found a negative number for field: " + name); return false;}  // TODO: Error flow
+  if (isNaN (val)) { throw new Error ("ERROR: isQuestionGraded found a NaN for field: " + name); }
+  if (val < 0)     { throw new Error ("ERROR: isQuestionGraded found a negative number for field: " + name); }  
+
+
+
+  var completed = GET_FIELD ("Z" + q + "-" + s).isBoxChecked(0);  // structured is complete when the complete box is set
+  if (!completed) {return false;}
+
   return true;
 }
 
 
 function shallQuestionBeGraded (q, s) {  // given question number q and serial id s, return if the question shall be graded as part of this PDF
-  var name = "grader" + q + "-" + s;
-  var color = getBorderColor (name);
-  return !isBlackColor (color);
+  var name    = "grader" + q + "-" + s;
+  var myColor = getBorderColor (name);     
+  return !isBlackColor (myColor);
 }
 
 
@@ -514,9 +497,9 @@ function getBorderColor (name) {
   // Value is typically: ["RGB", r, g, b], ["G", gray], ["CMYK", c, m, y, k], or "transparent".
   // ["RGB", 0, 0, 0]  is black
   
-  var color = field.strokeColor;
+  var myColor = field.strokeColor;
   // app.alert (color);
-  return color;
+  return myColor;
 }
 
 
@@ -598,8 +581,8 @@ function goFirstIncomplete (s) {  // navigate to the page with the first incompl
 
   if (q == -1) {   // all questions graded, nothing to do than to prepare exit modes
  
-    enableButton ("savenext", "SAVENEXTCAP");  
-    enableButton ("savestop", "SAVESTOP CAP");
+    enableButton ("savenext", "Save & Next...");  
+    enableButton ("savestop", "Save & Stop");
        app.alert ("All questions have been graded for serial " + s + "\n\n Please save result ");    
     return;
   }
@@ -628,8 +611,7 @@ function goToPage (requested) {// helper for proper redraw after jumping to a pa
 
 
 function getSerial () {  // obtain the serial number of the PDF 
-  var name = "Serial";
-  var field = this.getField (name);  if (!field) {app.alert ("ERROR: getSerial did not find field: " + name); return;}
+  var field = GET_FIELD ("Serial");
   var val = field.valueAsString;
   return val;
 }
@@ -637,13 +619,7 @@ function getSerial () {  // obtain the serial number of the PDF
 
 
 
-
-
-
-
 /* variables must be defined at the end or adobe vomits */
-
-
 
 var numQuestions;  
 var completed;       // maps number of question to boolean value indicating if this question has been graded completed  // TODO: deprecate ????
@@ -656,7 +632,7 @@ var maxPoints = \thetotalpointsfromfile;
 
 init();
 
-  // app.alert ("Viewer type=" + app.viewerType + "\n\n Platform="+app.platform + "\n\n Viewer Version=" + app.viewerVersion + "\n\n Language="+app.language);
+// app.alert ("Viewer type=" + app.viewerType + "\n\n Platform="+app.platform + "\n\n Viewer Version=" + app.viewerVersion + "\n\n Language="+app.language);
 
 
 try {
@@ -671,7 +647,7 @@ try {
   else {
    
     var s = getSerial ();
-    // app.alert ("now finalizing serial: " + s);
+ 
     lastProcessing(s);
   }
   

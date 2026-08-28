@@ -1049,11 +1049,11 @@
   \begin{textblock*}{270mm}(198mm,280mm)
     \PushButton[name=savenext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save:true, close: true, next: true} );}]{Save \& Next...}%
     \hspace*{1cm}
-    \PushButton[name=skipnext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {close:true, next:true} );}]{Skip \& Next...}
+    \PushButton[name=skipnext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save: false, close:true, next:true} );}]{Skip \& Next...}
     \hspace*{1cm}
-    \PushButton[name=savestop,height=1.0cm,width=3cm,bordercolor={orange},color={red},borderwidth=3,onclick={ Process ( {save: true, close: true} );}]{\bf Save \& Stop}
+    \PushButton[name=savestop,height=1.0cm,width=3cm,bordercolor={orange},color={red},borderwidth=3,onclick={ Process ( {save: true, close: true, next:false} );}]{\bf Save \& Stop}
     \hspace*{1cm}
-    \PushButton[name=skipstop,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save: false, close: true} );}]{\bf Skip \& Stop}
+    \PushButton[name=skipstop,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {save: false, close: true, next:false} );}]{\bf Skip \& Stop}
   \end{textblock*}   
   \begin{textblock*}{70mm}(198mm,2mm)
     Serial: \myexamserial

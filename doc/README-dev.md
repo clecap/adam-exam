@@ -3,7 +3,8 @@
 ## JS inside of PDF
 * Is very fragile
 + Only is pre-ECMA15 JS without all the 'new' features.
-* After a \n in a JS file there must be a blank or the parser chokes
+* CAVE: After a \n in a JS file there must be a blank or the parser chokes
+* CAVE: If there is a ) or } or otherwise unbalanced bracket inside of a comment (!) the parser chokes and ruins the PDF.
 * The PDF interface for Javascript might be spec-conformant but often is not what a programmer might expect.
 
 
