@@ -24,17 +24,7 @@ function computeAll(q, s) {
 // CAVE:     0 qualifies as falsish, so tests must use === false 
 function usingDiscretionaryGrading (q, s) {
   var discVal = GET_FIELD ("D" + q + "-" + s).value;  // value of field containing points for discretionary grading, if used
-  // NOTE: discVal now is a string value, but we may assume it has been reasonably sanitized
-
-//  app.alert ("discVal is " + discVal);
-
-  if (discVal === "") {return false;}   // no discretionary grading used
-
-  var numVal = Number (discVal);
-  ASSERT (typeof numVal === "number", "Assertion error: numVal is not a number");
-  ASSERT ( !isNaN(numVal), "Assertion error: numVal does not translate to a numeric value")
-
-  return numVal;
+  if (typeof discVal === "number" ) { return discVal; } else {return false;}
 }
 
 
@@ -47,25 +37,25 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
   var bmName, bmField, bmVal;              // bonus malus adjustment
 
   var sum = 0;
-  
-  var discVal = usingDiscretionaryGrading (q, s);   // status of discretionary grading
+
+
+  var isCompleted;                        // status of FERTIG checkbox // TODO: adjust   
+  var discVal = usingDiscretionaryGrading (1, s);
 
   if (discVal === false) {                // CASE: not using discretionary grading
-    // app.alert ("no discretionary grading used");
     isCompleted = GET_FIELD ("Z" + q + "-" + s).isBoxChecked(0);  // structured is complete when the complete box is set
     for (var i=1; i< 500; i++) { // summing up points, speculatively assuming a max of 500 options, breaking out when no more is found
       pointName = q + "X" + i + "-" + s;
       pointField = this.getField (pointName); if (!pointField) { break; }  // done with all we might be using
       pointVal = pointField.value;
       if (pointVal === "Off") {val = 0;} else { val =  pointField.attachedAdam; }     // determine value to be used here
- 
-      if (typeof val !== "number") {  // TODO: DO WE REALLY NEED THIS BLOCK ???
+      if (typeof val !== "number") { 
          // app.alert ("Error: val in summation has type " + typeof val); 
         app.alert ("Please reenter all grade points for this question");
         clearQuestionPoints (q, s);
         setAllCheckForQ (q, s, false);
+        colorify (q, s, false);
         return;}    // TODO: really a return here???
-
       sum += val;   ///////// ?????
     }
 
@@ -82,7 +72,7 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
       }
     }
     else {  // CASE: USING discretionary grading
-      // app.alert ("disc grading value is: " + discVal);
+      //app.alert ("disc is: " + discVal);
       sum = discVal;
       isCompleted = true;
     }
@@ -94,8 +84,7 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
   qpField.value = sum; 
   // app.alert ("punkte set to " + sum);
 
-   updateNextQuestButton ();
-
+  colorify (q, s, isCompleted);
   return sum;
 }
 
@@ -122,6 +111,9 @@ function writeAll (s) {
   punkteSummeField = GET_FIELD ("punktesumme-" + s);   punkteSummeField.value = punkteSumme; 
   prozentField     = GET_FIELD ("prozent-" + s);       prozentField.value     = rounded;
   noteField        = GET_FIELD ("note-" + s);          noteField.value        = percentToMark ( rounded );
+  
+ // punkteSummeField.strokeColor = prozentField.strokeColor = noteField.strokeColor = color.green;  // TODO: really need ??
+
 }
 
 
@@ -136,7 +128,7 @@ function writeAll (s) {
 
 /** HELPER FUNCTIONS **/
 
-function pdfStringToNumber(v) {  // conversion function for bonus malus strings
+function pdfStringToNumber(v) {
   if (v === null || v === undefined) {return 0;}
   
   v = String(v);
@@ -167,15 +159,16 @@ function GET_FIELD (name) {
 
 /** UI EVENT HANDLERS **/
 
-function pointClick (q, s, e, val) {  // called by a click into a point carrying checkbox
+function pointClick (q, s, e, val) {  // called by a click into a point carrying checkbox \cb of the solution
   // app.alert (e.target);
   // app.alert ("pointClick " + q + " " + s +  "  " + val );
   if (val === null || val === undefined) { app.alert ("ERROR in pointClick");}
   e.target.attachedAdam = val;        // attach value, since the value, exportValue mechanism of PDF is not supported in hyperref
   // app.alert ("now setting completed to false");
-  setCompleted (q, s, false);   // when we changed a checkbox, go back to unfinished to allow user a proper review of the status
+  setCompleted (q, s, false);   // a click clears the completed box
   uncheckDisc(q, s);
   computeAll(q, s);
+  colorify (q, s, false);
 }
 
 
@@ -184,71 +177,82 @@ function injectValue (q, s, e, val) {  // need this to attach value also for the
 }
 
 
-function completedClick(q, s, e) {   // called when a completion checkbox was clicked for question number q
-  updateNextQuestButton ();
-  if (e.target.isBoxChecked(0)) { // app.alert ("box completed is ticked");
-    computeAll(q, s);
-    colorify (q, s, true);  // color green
-    app.setTimeOut ("goFirstIncomplete (s)", 500);  // a bit of a timeout to allow user a check
-  }
-  else { // app.alert ("box completed is unticked");
-    uncheckDisc (q, s);      // clear any discretionary value which might have been set
-    colorify (q, s, false);  // remove the coloring
-  }
+function completedClick(q, s, e) {   // called when a completion checkbox was clicked for question number 
+  computeAll(q, s);
+  app.setTimeOut ("goFirstIncomplete (s)", 500);  // a bit of a timeout to allow user a check
+ // goFirstIncomplete (s);
+}
+
+// TODO: maybe deprecate. we no longer sue all buttons
+
+function allButton(q, s, e) {   // called when an allbutton was clicked for question number q
+  uncheckDisc (q,s);
+  setAllCheckForQ (q, s, true);
+  setCompleted (q, s, false);
+  computeAll(q, s);
 }
 
 
-function numericKS(q, s, e) {          // called upon a keystroke, but we do not yet have a valid value in field.value
-  // app.alert ("key " + e.value + " and change " + e.change);
-  e.rc = /^[0-9]*$/.test(e.change);    // reject keystrokes different from 0, 1, ... 9
+// DEPRECATE also in field ???? TODO:   MUST ALSo REMOVE in adam-exam class file first 
+function numericKS(q, s, e) {  // called when a value has been entered  /changed into a discretionary grading field
+
   return;
+
+  // Build the would-be value after this keystroke
+  // app.alert ("numericKS called");
+  var v      = e.value;
+  var before = v.substring(0, e.selStart);
+  var after  = v.substring(e.selEnd, v.length);
+  var next   = before + e.change + after;
+
+  // Allow empty while editing; final check happens in validate
+  if (!/^[0-9]*$/.test(next)) {
+    e.rc = false;
+  }
 }
 
-
-function onfocus (q, s, e) {     // called when discretionary gets the focus
-  setCompleted (q, s, false);    // focusing the discretionary field clears completion checkbox
-  return;
-}
-
-
-// called after value has been committed into the discretionary grading point field
-// however, the value is not yet available in field.value, only AFTER the validate event has completed
+// called after enter is pressed in the discretionary grading point field
+// called when we leave the field using a mouse click
 function numericValidate(q, s, e) {
-
-  // app.alert ("numericValidate called on value: " + e.value);
-  var val = e.value.replace(/^\s+|\s+$/g, ""); // trim away white space in an ES3-safe manner
+  app.alert ("numericValidate called on value: " + e.value);
+  var val = e.value.replace(/^\s+|\s+$/g, ""); // trim (ES3-safe)
   if (val === "") {  // empty: we have NO discretionary grading value
-
+    app.alert ("empty string");
     return;   
   }
   
   // Allow 0 or non-leading-zero integer
   if (!/^(0|[1-9][0-9]*)$/.test(val)) {
     app.alert("Enter 0 or an integer without leading zeros.");
-    e.rc = false;      // reject the value
+    e.rc = false;
   }
   else { // we have a non-empty value which we shall use
     // app.alert ("value is: " + val + " and " + e.value);  // dev and debug
     setAllCheckForQ (q, s, false);  // uncheck all point-checkboxes 
     resetRadio (q, s);
 
-
-//setCompleted (q, s, true);
-//  computeAll (q,s);
- //  app.setTimeOut ("goFirstIncomplete (s)", 500);
-
+ //   setCompleted (q, s, true);
+//    computeAll (q,s);
+ //   colorify (q,s, true);
 
    }
 }
 
 
 
+function onblur (q, s, e) { // called when the discretionary textfield loses focus
+  // app.alert ("onblur called");
+  computeAll (q,s);
+  colorify (q,s, true);
+  app.setTimeOut ("goFirstIncomplete (s)", 500);
+}
 
-function radioChange (q, s, e) {
+function radioChange (q, s, e) {     // called when the bonus / malus radio group settings change
   var field = GET_FIELD ("grp" + q + "-" + s);
   var v = field.value;
-  uncheckDisc (q, s);        // remove discretionary points
+  uncheckDisc (q, s);      // changing bonus / malus clears discretionary
   computeAll(q, s);
+  app.setTimeOut ("goFirstIncomplete (s)", 500);
 }
 
 
@@ -276,8 +280,6 @@ function setAllCheckForQ (q, s, flag) {  // uncheck all point-checkboxes for que
 function setCompleted (q, s, flag) {  // uncheck/uncheck all completed checkboxes for question q
   var field = GET_FIELD ("Z"+q + "-" + s);
   field.value = (flag ? "Yes" : "Off" );
-  colorify (q, s, flag);      // ensure that the coloring always reflects the status of the completion checkbox
-  updateNextQuestButton ();
 }
 
 
@@ -331,12 +333,7 @@ function enableButton (name, caption) {
   }
 }
 
-function updateNextQuestButton () { // update button to display next question to be graded, or none, if none
-  var s = getSerial ();
-  // TODO: should go to the place where we enable 
-  var nextQuest = firstIncompleteQuestion (s);
-  if (nextQuest != -1) {enableButton ("nextquest", "Next Question: " + nextQuest);}
-}
+
 
 
 /** OTHER functions **/
@@ -378,8 +375,34 @@ function init () {                    // initialize variables
 }
 
 
+// TODO: deprecate
+/*
+function printStatus () {
+  app.alert ("Number of questions=" + numQuestions );
+  var txt ="Questions completed in grading: "; 
+  for (var i =1; i <= numQuestions; i++) { txt += " " + completed[i]; } 
+  app.alert (txt);
+  txt = "Questions start on pages: ";
+  for (var i =1; i <= numQuestions; i++) { txt += " " + qP[i]; } 
+  app.alert (txt);
+  txt = "Sums for each task are: ";
+  for (var i =1; i <= numQuestions; i++) { txt += " " + sums[i]; } 
+  app.alert (txt);
+}
+*/
+
+
+
+
+
+
+
+
+
 
 /*** CODE to go to next ungraded question automagically ***/
+
+
 
 // TEST if there is a value in discretionary field
 function hasDiscretionary (q,s) {
@@ -520,11 +543,14 @@ function goFirstIncomplete (s) {  // navigate to the page with the first incompl
   if (q == -1) {   // all questions graded, nothing to do than to prepare exit modes
     enableButton ("savenext", "Save & Next of " + (stillMissing()-1) + "...");  
     enableButton ("savestop", "Save & Stop");
-    disableButton ("nextquest", "Next question" );
 
-  if (!isFullyAutomated()) {  // if not in fully automated mode: remind user to save.
-    app.alert ("All questions have been graded for serial " + s + "\n\n Please save result ");   
+  if (isFullyAutomated()) {  // in fully automated mode we need no info to the user
+
   }
+  else {  // in semi automated mode we remind the user to save
+      app.alert ("All questions have been graded for serial " + s + "\n\n Please save result ");   
+  }
+
     return;
   }
 

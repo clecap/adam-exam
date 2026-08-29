@@ -23,13 +23,13 @@
 
 ## Instructions for Graders
 
-Grading takes place with the **Adobe PDF Reader**. It uses the JavaScript and form features of that reader. Most other PDF readers are not supported and not tested, they might not work.
+Grading takes place with the **Adobe PDF Reader**. It uses the JavaScript and form features of that reader. Most other PDF readers are not supported or not supported fully; they are not tested, and they might not work.
 
 <details><summary><b style='font-size:larger'>Basic Workflows</b></summary>
 
 There are three strategies for grading, which provide varying degrees of support for convenience and scalability of your grading work. 
 
-The strategies require some adjustment of the preferences of your Adobe PDF Reader. 
+The strategies require some adjustment to the preferences of your Adobe PDF Reader. The recommended strategy (auto) provides the most support. Users who do not want to make the required adjustments can use the other strategies, which will provide less support.
 
 The strategies **must** not be mixed.
 
@@ -103,7 +103,30 @@ Enable Enhanced Security: Off
 
 
 
+<details><summary><b style='font-size:larger'>Possibilities for Grading</b></summary>
 
+**Item grading:**
+* Following the provided solution items you can provide points by clicking individual items of the solution.
+* When all points have been given, or when zero points have been achieved, you close the grading (checkbox: Fertig)
+
+**Bonus / Malus grading:**
+* If you like or dislike particular features of the solution, you can provide bonus / malus points.
+* Malus points cannot lead to negative points for a question, as according to (German) examination law, a single failed task must not contribute negatively towards the garde of an exam.
+* Bonus points and discretionary grading may lead to mor ethan 100% of the points. This also leads to a grade of "1.0" and colors the grade field yellow to draw the attention of the grader to this fact.
+
+**Discretionary grading:**
+* If the provided solution does not contain a reasonable dramework for grading the solution, since the student has followed a different path, discretionary grading is possible by entering a numer of points into a text field.
+* In this case, none of the other points apply nor the bonus / malus applies.
+
+**Comments:** You can provide optional comments as feedback to the learner.
+
+**Hinting:** The solution can provide optional hints to the learner, particularly for situations where typical errors can be expected
+or for situations where typical grading processes might require hints. You can click the hints and thereby show the learner that this hint applies.
+
+**Didactical side remark:** Grading along the lines of prescribed solution items, although highly efficient and scalable for mass exams,
+didactically is not the optimal form of grading. It would
+
+</details>
 
 
 <details><summary><b style='font-size:larger'>Calculation of Grades</b></summary>
@@ -115,7 +138,7 @@ Enable Enhanced Security: Off
 
 | Percentage p       | Grade |
 | ------------------ | ----- |
-| p > 95 && p <= 100 | 1.0   |
+| p > 95             | 1.0   |
 | p > 90 && p <= 95  | 1.3   |
 | p > 85 && p <= 90  | 1.7   |
 | p > 80 && p <= 85  | 2.0   |

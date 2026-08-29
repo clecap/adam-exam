@@ -30,7 +30,15 @@ function ASSERT (bC, str) { if (!bC) {throw new Error (str);} }
 
 function percentToMark (p) {
   if (typeof p != "number") { throw new Error ("percentToMark: assertion error: wrong type: " + typeof p); }
-  if      ( p > 95 && p <= 100 )   {return "1.0"; }
+
+  var s = getSerial ();  ASSERT (s, "percentToMark could not obtain serial");  // TODO: maybe provide serial as part of funciton signature
+  var field = GET_FIELD ("note-" + s) ;
+ 
+  if ( p > 100)  { field.fillColor = color.yellow; }
+  else           { field.fillColor = color.white;  }
+
+  if      ( p > 100)               {return "1.0";}
+  else if ( p > 95 && p <= 100 )   {return "1.0"; }
   else if ( p > 90 && p <=  95 )   {return "1.3"; }
   else if ( p > 85 && p <=  90 )   {return "1.7"; }
   else if ( p > 80 && p <=  85 )   {return "2.0"; }
@@ -42,6 +50,7 @@ function percentToMark (p) {
   else if ( p > 50 && p <=  55 )   {return "4.0"; }
   else if ( p >= 0 && p <=  50 )   {return "5";   }
   else { throw new Error ("percentToMark: assertion error: wrong value of percentages: " + p); }
+
 }
 
 

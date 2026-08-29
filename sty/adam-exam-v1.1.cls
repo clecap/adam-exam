@@ -290,7 +290,7 @@
 %%
 \def\discretionarypoints{
   {\small\begin{tabular}[]{@{}cc}Freie\\Wertung\end{tabular}}
-  \raisebox{-6pt}{\mbox{\TextField[name=D\currentQuestion-\myexamserial,width=0.7cm,height=0.6cm,bordercolor=\bordercolor,borderwidth=2,charsize=12pt,readonly=\readonlyflag,onblur={onblur(\currentQuestion,"\myexamserial",event);},keystroke={numericKS(\currentQuestion,"\myexamserial",event);},validate={numericValidate(\currentQuestion, "\myexamserial",event);}]{}}}
+  \raisebox{-6pt}{\mbox{\TextField[name=D\currentQuestion-\myexamserial,width=0.7cm,height=0.6cm,bordercolor=\bordercolor,borderwidth=2,charsize=12pt,readonly=\readonlyflag,onfocus={onfocus(\currentQuestion,"\myexamserial",event);},keystroke={numericKS(\currentQuestion,"\myexamserial",event);},validate={numericValidate(\currentQuestion, "\myexamserial",event);}]{}}}
 }
 
 % \zb   Zero Box for typesetting a 
@@ -1044,9 +1044,11 @@
     \hspace*{1cm}
 %    \PushButton[name=skipnext,height=1.0cm,width=3cm,bordercolor={yellow},color={red},borderwidth=3,onclick={ Process ( {close:true, next:true, skipnext:true} );}]{Skip \& Next...}
 %    \hspace*{1cm}
-    \PushButton[name=savestop,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {save: true, close: true} );}]{\makebox[6cm][c]{Save \& Stop}}
+    \PushButton[name=savestop,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {save: true, close: true} );}]{\makebox[3cm][c]{Save \& Stop}}
     \hspace*{1cm}
-    \PushButton[name=skipstop,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {close: true} );}]{\makebox[6cm][c]{Skip \& Stop}}
+    \PushButton[name=skipstop,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ Process ( {close: true} );}]{\makebox[3cm][c]{Skip \& Stop}}    
+    \hspace*{1cm}
+    \PushButton[name=nextquest,height=1.0cm,width=6cm,bordercolor={green},color={red},borderwidth=3,onclick={ goFirstIncomplete();}]{\makebox[3cm][c]{Next Question}}
   \end{textblock*}   
   \begin{textblock*}{70mm}(198mm,2mm)
     Serial: \myexamserial
