@@ -58,15 +58,8 @@ function determineCompletedAndZ (q, s) {   // check the zero point boxesand disc
       pointField = this.getField (pointName); if (!pointField) { break; }  // done with all we might be using
       pointVal = pointField.value;
       if (pointVal === "Off") {val = 0;} else { val =  pointField.attachedAdam; }     // determine value to be used here
- 
-      if (typeof val !== "number") {  // TODO: DO WE REALLY NEED THIS BLOCK ???
-         // app.alert ("Error: val in summation has type " + typeof val); 
-        app.alert ("Please reenter all grade points for this question");
-        clearQuestionPoints (q, s);
-        setAllCheckForQ (q, s, false);
-        return;}    // TODO: really a return here???
-
-      sum += val;   ///////// ?????
+      ASSERT (typeof val == "number", "Incorrect type of val");
+      sum += val;
     }
 
     // now calculate the bonus / malus adjustment points
@@ -126,14 +119,6 @@ function writeAll (s) {
 
 
 
-
-
-
-
-
-
-
-
 /** HELPER FUNCTIONS **/
 
 function pdfStringToNumber(v) {  // conversion function for bonus malus strings
@@ -161,10 +146,6 @@ function GET_FIELD (name) {
 }
 
 
-
-
-
-
 /** UI EVENT HANDLERS **/
 
 function pointClick (q, s, e, val) {  // called by a click into a point carrying checkbox
@@ -176,11 +157,6 @@ function pointClick (q, s, e, val) {  // called by a click into a point carrying
   setCompleted (q, s, false);   // when we changed a checkbox, go back to unfinished to allow user a proper review of the status
   uncheckDisc(q, s);
   computeAll(q, s);
-}
-
-
-function injectValue (q, s, e, val) {  // need this to attach value also for the cases where we do not click but merely activate the ALL button
-  e.target.attachedAdam = val; 
 }
 
 
@@ -207,6 +183,8 @@ function numericKS(q, s, e) {          // called upon a keystroke, but we do not
 
 function onfocus (q, s, e) {     // called when discretionary gets the focus
   setCompleted (q, s, false);    // focusing the discretionary field clears completion checkbox
+  setAllCheckForQ (q, s, flag);  // focusing the discretionary field clears individual points checkboxes
+  resetRadio (q, s);             // focusing the discretionary field clears completion checkbox
   return;
 }
 
@@ -231,27 +209,16 @@ function numericValidate(q, s, e) {
     // app.alert ("value is: " + val + " and " + e.value);  // dev and debug
     setAllCheckForQ (q, s, false);  // uncheck all point-checkboxes 
     resetRadio (q, s);
-
-
-//setCompleted (q, s, true);
-//  computeAll (q,s);
- //  app.setTimeOut ("goFirstIncomplete (s)", 500);
-
-
    }
 }
 
 
-
-
-function radioChange (q, s, e) {
+function radioChange (q, s, e) {  // called when a bonus / malus radio buton is clicked
   var field = GET_FIELD ("grp" + q + "-" + s);
   var v = field.value;
   uncheckDisc (q, s);        // remove discretionary points
   computeAll(q, s);
 }
-
-
 
 
 
@@ -273,7 +240,7 @@ function setAllCheckForQ (q, s, flag) {  // uncheck all point-checkboxes for que
   }
 }
 
-function setCompleted (q, s, flag) {  // uncheck/uncheck all completed checkboxes for question q
+function setCompleted (q, s, flag) {  // uncheck/uncheck the  "completed" checkbox for question q
   var field = GET_FIELD ("Z"+q + "-" + s);
   field.value = (flag ? "Yes" : "Off" );
   colorify (q, s, flag);      // ensure that the coloring always reflects the status of the completion checkbox
@@ -319,6 +286,7 @@ function colorify (q, s, flag) {
 function disableButton (name) {
   var btn = this.getField(name);
   if (btn) { btn.readonly = true;  btn.fillColor = color.ltGray; btn.textColor = color.dkGray; 
+    btn.buttonSetCaption ("",0); btn.buttonSetCaption ("",1); btn.buttonSetCaption ("",2);
   }
 }
 
@@ -333,15 +301,18 @@ function enableButton (name, caption) {
 
 function updateNextQuestButton () { // update button to display next question to be graded, or none, if none
   var s = getSerial ();
-  // TODO: should go to the place where we enable 
   var nextQuest = firstIncompleteQuestion (s);
-  if (nextQuest != -1) {enableButton ("nextquest", "Next Question: " + nextQuest);}
+  if (nextQuest != -1) {enableButton ("nextquest", "Next Question: " + nextQuest);} 
+  else {disableButton ("nextquest");}
 }
 
 
 /** OTHER functions **/
 
-
+// called by Checkbox
+function injectValue (q, s, e, val) {  // need this to attach value also for the cases where we do not click but merely activate the ALL button
+  e.target.attachedAdam = val; 
+}
 
 
 function init () {                    // initialize variables 
@@ -361,18 +332,13 @@ function init () {                    // initialize variables
       numQuestions = (question > numQuestions ? question : numQuestions);
     }
   }
-  completed = new Array ( numQuestions+1 );            // no initialization // for (var i = 1; i <= numQuestions; i++) {completed[i] = false;}
-  qP        = new Array ( numQuestions+1 );            for (var i = 1; i <= numQuestions; i++) {qP[i] = 99999;}   
-  sums      = new Array ( numQuestions+1 );            for (var i = 1; i <= numQuestions; i++) {sums[i] = 0;}  
-  Z         = new Array ( numQuestions+1 );            // no initialization
-  D         = new Array ( numQuestions+1 );            // no initialization
+
   for (var i = 0; i < this.numFields; i++) {      // iterate over absolutely all fields
     name = this.getNthFieldName(i);               // get field name for field number i
     f = this.getField(name);                      // get field name for this field
     if (f && (f.type === "checkbox") ) {             // if we found this field and it is a checkbox
       parts = name.split("X");                    // split the name on the letter X
       question = parts[0] ? Number(parts[0]) : null; // obtain first part, which is the question to which the field belongs
-      qP[question] = f.page;
     }
   }
 }
@@ -386,8 +352,6 @@ function hasDiscretionary (q,s) {
   discVal = GET_FIELD ("D" + q + "-" + s).value;  // value of field containing points for discretionary grading, if used
   if (typeof discVal === "number" ) { return true; } else {return false;}
 }
-
-
 
 
 
@@ -503,7 +467,7 @@ function firstPageOfField (fieldName) { // returns the first page number in term
 }
 
 
-function isFullyAutomated () {  // return true if runnign in fully automated mode using START.pdf
+function isFullyAutomated () {  // return true if running in fully automated mode using START.pdf
   if ( global && global.openedByScript && global.openedByScript[this.path] ) {return true;} else {return false;}
 }
 
@@ -520,7 +484,7 @@ function goFirstIncomplete (s) {  // navigate to the page with the first incompl
   if (q == -1) {   // all questions graded, nothing to do than to prepare exit modes
     enableButton ("savenext", "Save & Next of " + (stillMissing()-1) + "...");  
     enableButton ("savestop", "Save & Stop");
-    disableButton ("nextquest", "Next question" );
+    disableButton ("nextquest" );
 
   if (!isFullyAutomated()) {  // if not in fully automated mode: remind user to save.
     app.alert ("All questions have been graded for serial " + s + "\n\n Please save result ");   
@@ -529,8 +493,6 @@ function goFirstIncomplete (s) {  // navigate to the page with the first incompl
   }
 
   var name = "grader" + q + "-" + s;  
-  var field =this.getField(name);  if (!field) {app.alert ("ERROR: goFirstIncomplete did not find field: " + name); return;}
-     // app.alert ("found field " + name);
   var page = firstPageOfField (name);
      // app.alert ("found page " + page);  
   goToPage (page);    // CAVE: This navigates asynchronously - beware of race conditions !
@@ -560,24 +522,23 @@ function getSerial () {  // obtain the serial number of the PDF
 
 
 
+
+
+
+
+
 /* variables must be defined at the end or adobe vomits */
 
 var numQuestions;  
-var completed;       // maps number of question to boolean value indicating if this question has been graded completed  // TODO: deprecate ????
-
-var qP;              // maps the number of question to the page where this question is placed or starts to be placed
-// TODO: do we still need this ??
-
-var sums;            // maps the number of question to the sum of points achieved at this question
-// TODO: do we still need this?
-
-
-var Z;               // maps the number of question to a flag indicating if the zero point box is ticked
-var D;               // maps the number of question to a flag indicating i the discretionary grading is used in this question
 
 var maxPoints = \thetotalpointsfromfile;
 
+
+checkProperSettings ();
+
+
 init();
+updateNextQuestButton();   // at the beginning, also already initialize this button properly
 
 // app.alert ("Viewer type=" + app.viewerType + "\n\n Platform="+app.platform + "\n\n Viewer Version=" + app.viewerVersion + "\n\n Language="+app.language);
 
@@ -585,16 +546,11 @@ init();
 try {
 //  checkOpenedByScript (this);  // check for proper opening mode, if not bark at user
 
-//  computeAll();                  // compute current status // TODO !!!!!
-
   var navigating = goFirstIncomplete();           // go to first ungraded question, obtain info, if we go asynchronously
   if (navigating) {  // there still is an ungraded question to which we are navigating now asynchronously
- 
   }
   else {
-   
     var s = getSerial ();
- 
     lastProcessing(s);
   }
   

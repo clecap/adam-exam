@@ -25,13 +25,13 @@ function cloneArray(a) {
   return b;
 }
 
-function ASSERT (bC, str) { if (!bC) {throw new Error (str);} }
+function ASSERT (bC, str) { if (!bC) {throw new Error ("Assertion Error: " + str);} }
 
 
 function percentToMark (p) {
   if (typeof p != "number") { throw new Error ("percentToMark: assertion error: wrong type: " + typeof p); }
 
-  var s = getSerial ();  ASSERT (s, "percentToMark could not obtain serial");  // TODO: maybe provide serial as part of funciton signature
+  var s = getSerial ();  ASSERT (s, "percentToMark could not obtain serial"); 
   var field = GET_FIELD ("note-" + s) ;
  
   if ( p > 100)  { field.fillColor = color.yellow; }
@@ -54,14 +54,25 @@ function percentToMark (p) {
 }
 
 
+function endsWithStartPdf(s) {return /START\.pdf$/.test(s);}
+
 // return a list of files to look at from the manifest file queue.txt; look inside directory baseDir
 function getQueueEntries () {
-  var currentFull = norm(this.path);   ASSERT (currentFull, "getQueueEntries could not obtain currentFull");
-  var baseDir = dirname(currentFull);  ASSERT (baseDir,     "getQueueEntries could not obtain baseDir");
+  var currentBase = this.documentFileName;ASSERT (currentFull, "getQueueEntries could not obtain documentFileName");
+  var currentFull  = norm(this.path);   ASSERT (currentFull, "getQueueEntries could not obtain normalized path");
+  var baseDir      = dirname(currentFull);  ASSERT (baseDir,     "getQueueEntries could not obtain baseDir");
+
+  var searchDir;
+
+  if (endsWithStartPdf ()) {} else {}
+  
 
   var stm;
   try{ stm = ReadQueueFile (baseDir);} catch (x) { throw x;} // rethrow for proper UI exit; has already been notified to user in ReadQueueFile
-  if (!stm) {app.alert("ERROR: Cannot read queue file.\n\n Fix this and restart"); throw "getQueueEntries could not read queue file"; }  
+
+
+
+  if (!stm) {app.alert("ERROR: Cannot read queue file.\n\n Fix this and restart"); throw "getQueueEntries could not read queue file at " + baseDir; }  
   var lines = splitLines(util.stringFromStream(stm, "utf-8"));
   var entries = [];
   for (var i = 0; i < lines.length; i++) {
@@ -77,6 +88,24 @@ function getQueueEntries () {
 
 
 
+// perform a startup check if the required settings have been made
+function checkProperSettings () {
+  var msg = "Installation not complete\n  Read https://github.com/clecap/adam-exam/README.md\n ";
+  var flag = false;
+  var currentFull;
+  
+  try {
+    currentFull = norm(this.path);
+  } catch (x) { flag = true; msg += ("\n Exception: " + x); }
+
+  try {
+    AssertSafeAdamPath ( currentFull, ".pdf");
+  } catch (x) { flag = true; msg += ("\n Exception: " + x); }
+
+  if (flag) {app.alert (msg); return false;}   // bail out on error, info user and signal upstairs to exit
+
+  return true;                                 // all ok
+}
 
 
 
@@ -187,8 +216,6 @@ function Process ( opt ) {
         app.alert ("DONE grading " + entries.length + " sheets \n  Thank you!");
       }
     }
-
-
 
 
   } catch (e) {app.alert("ERROR: Process failed. \n\n Exception reported was:" + e + " STACK: " + e.stack);}
