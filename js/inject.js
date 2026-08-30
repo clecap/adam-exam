@@ -56,23 +56,57 @@ function percentToMark (p) {
 
 function endsWithStartPdf(s) {return /START\.pdf$/.test(s);}
 
+
+function parentDirectory(path) {
+  var i = path.lastIndexOf("/");
+  if (i < 0) return "";
+  return path.substring(0, i);
+}
+
+
+// "input-raw/0014.pdf"  ->  "completed-raw/0014.pdf"
+// The queue lists the sheets as input-TAG/filename; their graded copies live in completed-TAG/filename.
+// Returns null if the entry does not have that shape, so the caller can report a broken queue file.
+function completedEntry (entry) {
+  if (!/^input-[^\/]*\//.test(entry)) { return null; }
+  return entry.replace(/^input-/, "completed-");
+}
+
+
+// Get the path to the grader directory: START.pdf lies in it, a sheet lies one level below in input-TAG/
+function graderDirOf () {
+  var baseDir = dirname (norm (this.path));
+  if (endsWithStartPdf (this.documentFileName)) { return baseDir; }    // we are START.pdf, so we return baseDir
+  return parentDirectory (baseDir);                                    // otherwise we return the parent directory
+}
+
+// The current document as it would appear in queue.txt: "input-TAG/filename". null for START.pdf.
+function currentEntryOf () {
+  var baseDir = dirname (norm (this.path));
+  if (endsWithStartPdf (this.documentFileName)) { return null; }   // START.pdf is not a queue entry
+  return basename (baseDir) + "/" + this.documentFileName;
+}
+
+
+
 // return a list of files to look at from the manifest file queue.txt; look inside directory baseDir
 function getQueueEntries () {
-  var currentBase = this.documentFileName;ASSERT (currentFull, "getQueueEntries could not obtain documentFileName");
-  var currentFull  = norm(this.path);   ASSERT (currentFull, "getQueueEntries could not obtain normalized path");
-  var baseDir      = dirname(currentFull);  ASSERT (baseDir,     "getQueueEntries could not obtain baseDir");
+  var currentBase  = this.documentFileName;   ASSERT (currentBase, "getQueueEntries could not obtain documentFileName");
+  var currentFull  = norm(this.path);         ASSERT (currentFull, "getQueueEntries could not obtain normalized path");
+  var baseDir      = dirname(currentFull);    ASSERT (baseDir,     "getQueueEntries could not obtain baseDir");
 
   var searchDir;
 
-  if (endsWithStartPdf ()) {} else {}
+  // app.alert ("basedir is: " + baseDir + " and full is " + currentFull);
+
+  if (endsWithStartPdf (currentBase)) {searchDir = baseDir;}  // current document is START.pdf so we have the right directory
+  else {searchDir = parentDirectory (baseDir);}               // current directory is a sheet - which is liging inside a subdirectory - must go up one step
   
-
   var stm;
-  try{ stm = ReadQueueFile (baseDir);} catch (x) { throw x;} // rethrow for proper UI exit; has already been notified to user in ReadQueueFile
+  try{ stm = ReadQueueFile (searchDir);} catch (x) { throw x;} // rethrow for proper UI exit; has already been notified to user in ReadQueueFile
 
-
-
-  if (!stm) {app.alert("ERROR: Cannot read queue file.\n\n Fix this and restart"); throw "getQueueEntries could not read queue file at " + baseDir; }  
+  
+  ASSERT (stm, "getQueueEntries could not read queue file at " + searchDir);
   var lines = splitLines(util.stringFromStream(stm, "utf-8"));
   var entries = [];
   for (var i = 0; i < lines.length; i++) {
@@ -110,21 +144,30 @@ function checkProperSettings () {
 
 
 
-// given a list of entries return a list of ungraded entries (ie entries eligible for grading)
+// given a list of entries, such as raw-TAG/filename return a list of ungraded entries not yet showing up in completed-TAG/filename
 function getEligibles (entries) {
-  var doc = this;
-  var currentBase = doc.documentFileName;
-  var currentFull = norm(doc.path);
-  if (!currentBase || !currentFull) {app.alert("ERROR: Cannot determine current document path. ABORTING."); return; }
-  var baseDir = dirname(currentFull);
-  var completedDir = join (baseDir, "completed");
+  var currentBase  = this.documentFileName;
+  var currentFull  = norm(this.path);
+  var baseDir      = dirname(currentFull);
+  var searchDir;
+
+  if (endsWithStartPdf (currentBase)) {searchDir = baseDir;}  // current document is START.pdf so we have the right directory
+  else {searchDir = parentDirectory (baseDir);}               // current directory is a sheet - which is liging inside a subdirectory - must go up one step
+  // NOW searchDir should be the directory with the correctors name only
 
   var eligibles   = [];
   var entry;
   for (var step = 0; step < entries.length; step++) {
-    entry = entries[step];
-    if (TrustedFileExists(join(completedDir, entry))) continue;   // skip, since file is in the completed directory
-    eligibles.push ( entry);
+    entry = entries[step];                                   // this now is of the form input-TAG/filename with an unknown TAG string
+
+    var completedRel = completedEntry (entry);               // the same sheet as completed-TAG/filename
+    if (!completedRel) {
+      app.alert ("ERROR: malformed queue entry, expected input-TAG/filename : " + entry);
+      continue;                                              // ignore the bad line, but keep going
+    }
+
+    if (TrustedFileExists (join (searchDir, completedRel))) continue;  // skip, since file is in the completed directory
+    eligibles.push ( entry);                                 // keep the input-TAG/ form: that is what the caller opens
   }
   return eligibles;
 }
@@ -149,36 +192,46 @@ function Process ( opt ) {
   var doc = this;
 
   try {
-    var currentBase = doc.documentFileName;
-    var currentFull = norm(doc.path);
-    var baseDir = dirname(currentFull);
 
-    var outDir  = join ( baseDir, "completed" );
-    var outPath = join ( outDir, currentBase );
+    var currentBase  = doc.documentFileName;
+    var currentFull  = norm(doc.path);
+    var searchDir    = graderDirOf ();                   // .../corrections/<grader>
+    var currentEntry = currentEntryOf ();                // "input-TAG/filename", null for START.pdf
+
+    var outPath = null;                                  // where the graded copy shall go
+    if (currentEntry) {
+      var completedRel = completedEntry (currentEntry);  // "completed-TAG/filename"
+      if (completedRel) { outPath = join (searchDir, completedRel); }
+    }
 
      var entries   = getQueueEntries (); 
      var eligibles = getEligibles (entries);     
 
     if (opt.save) {                                // command was to SAVE the file
 
+      ASSERT (outPath, "Cannot save since outPath is not defined");
+
       // first do a safety check whether really all questions have been graded
       var s   = getSerial ();                 
       var inc = firstIncompleteQuestion (s);
       if (inc != -1) { app.alert ("Not yet graded all questions!"); return; }
 
+      // app.alert ("saving: " + outPath + " removing: " + currentBase);
+
       // second do a safety check whether file has already been saved earlier
       if (TrustedFileExists(outPath)) { app.alert("NOT SAVING - file already has been processed. If you want to change grading, delete file in directory /complete :\n\n" + outPath ); } 
       else                     { try { TrustedSaveAs (outPath);} catch (eSave) { app.alert("Cannot save to:\n\n" + outPath + "\n\n" + "This usually means the user directory does not exist, is not writable, or the file is locked.\n\n" + "Acrobat error:\n" + eSave); }  }
     
+
       // remove file manually from the list of eligibles since it take a while for the file to settle on disc and we have no possibility to wait for that event
-      var idx = eligibles.indexOf( currentBase );      
-      if (idx !== -1) {eligibles.splice(idx, 1);}
-    
+      for (var idx = 0; idx < eligibles.length; idx++) {
+        if (eligibles[idx] === currentEntry) { eligibles.splice (idx, 1); break; }
+      }
     }
 
     if (opt.close) {                                                                 // On save error we still continue queueing to next eligible file.
-      doc.closeDoc(true);                                                            // close this document without saving it // TODO: CHECK AND TEST NOT SAVING....
       if (global && global.openedByScript) {delete global.openedByScript[doc.path];} // delete opening time stamp
+      doc.closeDoc(true);                                                            // close this document without saving it // TODO: CHECK AND TEST NOT SAVING....
      }
 
     if (opt.next) { // command was to move on to the next item
@@ -190,18 +243,19 @@ function Process ( opt ) {
         // Re-opening the current document would either do nothing or fight with the close that may still be in progress, so it is skipped explicitly here.
         var nextName = null;
         for (var k = 0; k < eligibles.length; k++) {
-          if (eligibles[k] !== currentBase) { nextName = eligibles[k]; break; }
+          if (eligibles[k] !== currentEntry) { nextName = eligibles[k]; break; }
         }
 
  
         if (!nextName) {  // this means we still have another eligible docu but the only one is exactly this document
           if (opt.skipnext) { app.alert ("Cannot 'Skip & Next' since this is the last sheet to grade. \n  Grade it or 'Skip & Stop' "); return;}
           else { 
-            app.alert ("SHOULD THAT REALLY HAPPEN??? we get: " + nextName);
+            ASSERT (false, "SHOULD THAT REALLY HAPPEN??? we get: " + nextName);
           }
         }
 
-        var nextPath = join ( baseDir, nextName);
+        var nextPath = join (searchDir, nextName);        // nextName already carries input-TAG/
+
 
         if (!TrustedFileExists(nextPath)) {app.alert ("ERROR: Exam sheet " + nextPath + " contained in queue.txt file but missing in directory"); return;}
         try {

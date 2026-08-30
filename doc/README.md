@@ -1,11 +1,11 @@
 # Description
 
-**Adam-Exam** is a solution for automating
+**Adam-Exam** is a solution for 
 
-- the generation of printable PDF-based exam sheets and grading schemes
-- the scanning, checking, and archiving of exam sheets
-- the grading process, especially when distributed among several graders
-- the documentation of the grading and evaluation schemes
+- generating printable PDF-based exam sheets and grading schemes using LaTeX.
+- scanning, checking, data-cleansing, and archiving of exam sheets.
+- grading exam sheets,  especially when distributed among several graders.
+- documenting grading and evaluation schemes.
 
 <details><summary><b  style='font-size:larger'>More Details</b></summary>
 
@@ -15,9 +15,15 @@
 - An increased demand by examinees to get feedback on their mistakes.
 - An increased number of exam participants.
 - The closed source and closed process structure of competing commercial solutions, which made it impossible for the examiners to adjust the workflows to their needs and which offered graphical user interfaces with an increasingly intransparent access to the cognitive models behind their solutions.
-- As a project for the author for studying the capabilities of Claude and ChatGPT.
+- A project for the author for studying the capabilities of Claude and ChatGPT.
 
-**The design decisions** in Adam-Exam favor terminal and script access to the user interface, which makes the system more flexible and adjustable for users capable of using terminal shell commands, Docker containers, and programming languages. They, however, make the system less friendly for users who would prefer easy-peasy graphical interfaces over a tight control of program execution.
+**The design decisions** in Adam-Exam favor terminal and script access to the user interface, which makes the system more flexible and adjustable for users capable of using 
+* LaTeX
+* terminal shell commands
+* Docker containers, and 
+* programming languages. 
+
+They, however, make the system less friendly for users who would prefer easy-peasy graphical interfaces over a tight control of program execution.
 
 </details>
 
@@ -25,79 +31,43 @@
 
 Grading takes place with the **Adobe PDF Reader**. It uses the JavaScript and form features of that reader. Most other PDF readers are not supported or not supported fully; they are not tested, and they might not work.
 
-<details><summary><b style='font-size:larger'>Basic Workflows</b></summary>
-
-There are three strategies for grading, which provide varying degrees of support for convenience and scalability of your grading work. 
-
-The strategies require some adjustment to the preferences of your Adobe PDF Reader. The recommended strategy (auto) provides the most support. Users who do not want to make the required adjustments can use the other strategies, which will provide less support.
-
-The strategies **must** not be mixed.
-
-| Strategy | Scroll to next question <br>to be graded | Open next sheet <br> to be graded |
-| -------- | ---------------------------------------- | --------------------------------- |
-| Manual   | User                                     | User                              |
-| Semi     | Automatic                                | User                              |
-| Auto  (Recommended)   | Automatic                                | Automatic                         |
-
-</details>
-
 <details><summary><b style='font-size:larger'>Preference Settings for Adobe PDF Reader (Read me first!)</b></summary>
 
-##### Manual Strategy
-* **Necessary:** Preferences -> JavaScript -> Enable Acrobat JavaScript
-* **Recommended:** Preferences -> JavaScript -> JavaScript Debugger -> Show console on errors and messages
-
-
-##### Semi Strategy
-* **Necessary:** All settings for the manual strategy plus:
-* **Necessary:** Preferences -> Security (Enhanced) -> Add Folder Path: Select the directory in which the exam sheets reside. (It may also be a parent-directory through several transitive steps).
-
-##### Auto Strategy
-* **Necessary:** All settings for the semi strategy plus:
-* **Necessary:** Place file ``` js/trusted.js``` into directory 
- ```<user homedirectory>/Library/Application Support/Adobe/Acrobat/DC/JavaScripts```
+* Preferences -> JavaScript -> Enable Acrobat JavaScript
+* Preferences -> JavaScript -> JavaScript Debugger -> Show console on errors and messages
+* Preferences -> Security (Enhanced) -> Add Folder Path: Select the directory in which the exam sheets reside. (It may also be a parent-directory through several transitive steps).
+* Place file ``` js/trusted.js``` from the [Github Repository](https://github.com/clecap/adam-exam) into directory for trusted JS.
+  On MacOS this is:
+ ```<user-homedirectory>/Library/Application Support/Adobe/Acrobat/DC/JavaScripts```
 
  This JavaScript file provides some additional trusted functionality to the Adobe PDF Reader.
  The use of these functions is limited to subdirectories of a directory called ```adam-exam```.
 
-
-TODO !!!!!!!!!
-Security 8Enhanced). Enable Protected mode at startup: Off
-Enable Enhanced Security: Off
-
-  Restart the adobe PDF Reader when you made these settings.
+  Restart the Adobe PDF Reader (full quit!) after you made these settings.
 
 </details>
 
 
-<details><summary><b style='font-size:larger'>Manual Grading</b></summary>
-
-</details>
-
-
-
-<details><summary><b style='font-size:larger'>Semi Grading</b></summary>
-
-</details>
-
-
-
-<details><summary><b style='font-size:larger'>Auto Grading (Recommended)</b></summary>
+<details><summary><b style='font-size:larger'>Grading</b></summary>
 
 1. Make a directory named ```adam-exam``` somewhere on your local machine.
+1. Ensure that this folder is listed as trusted under  Preferences -> Security (Enhanced) -> Add Folder Path.
+
 1. Download the entire directory with your name into this directory. This directory should contain:
-    1. one or more exam files
-    1. a file called ```queue.txt```, which contains a list of exam files to be graded.
-    1. a file called ```START.pdf```, which **always** is the entry point into the grading process.
-    1. a directory called ```completed/```, which at the end will contain all graded exam files.
+    1. a directory of the form ```input-<TAG>```, which contains the sheets to be graded.
+    1. a directory of the from ```completed-<TAG>```, which contains the sheets which have been graded.  
+    1. a file ```queue.txt```, which contains a list of sheets to be graded.
+    1. a file ```START.pdf```, which **always** is the entry point into the grading process.
+
 1. Open the file ```START.pdf``` with Adobe Reader and follow the instructions.
 
 **Pausing:** You can pause and restart the grading process at any time. When restarting, again open ```START.pdf```
 
-**Finished:** When you have completed the grading, all graded sheets reside in the subdirectory - upload this subdirectory to the server.
+**Finished:** When you have completed the grading, all graded sheets reside in the subdirectory ```completed-<TAG>/```.  
+Upload this subdirectory to the server.
 
 **Correcting:** When you want to correct a grading: 
-1. Delete the incorrectly graded file in directory ```completed/```
+1. Delete the incorrectly graded file in directory ```completed-<TAG>/```
 1. Open ```START.pdf``` and follow the instructions.
 </details>
 
@@ -123,8 +93,7 @@ Enable Enhanced Security: Off
 **Hinting:** The solution can provide optional hints to the learner, particularly for situations where typical errors can be expected
 or for situations where typical grading processes might require hints. You can click the hints and thereby show the learner that this hint applies.
 
-**Didactical side remark:** Grading along the lines of prescribed solution items, although highly efficient and scalable for mass exams,
-didactically is not the optimal form of grading. It would
+**Didactical side remark:** Grading along the lines of prescribed solution items, although highly efficient and scalable for mass exams,didactically is not the optimal form of grading. In this case, you can use discretionary grading and comments, or stop using this system.
 
 </details>
 
@@ -159,8 +128,9 @@ When adjusting the grading table: Note that percentages are rounded usign the ce
 
 
 <details><summary><b style='font-size:larger'>Some Remarks</b></summary>
+
 * The condition of being inside a subdirectory of a directory ```adam-exam/``` ensures that the additional functionality implemented in ```trusted.js``` is available only to PDF files of this application. In this sense, it serves as a security sandbox.
-* Some constructions in the workflow are the consequence of the other security mechanisms imposed by Adobe PDF Reader. For example, there is not function for traversing a directory. Thus, the file ```queue.txt```is used.
+* Some constructions in the workflow are the consequence of the other security mechanisms imposed by Adobe PDF Reader. For example, there is no function for traversing a directory. Thus, the file ```queue.txt```is used.
 </details>
 
 
@@ -210,9 +180,3 @@ Getting the paths correct is important for the following reasons:
 ## Latex Components
 
 # Security
-
-adm-exam must be in the path
-
-Correcting:
-
-In a directory not containing a START.pdf script the files can and must be opened individually AND saved individually (CHECK!!)

@@ -11,9 +11,9 @@ fi
 
 TOP_DIR="$(cd -P -- "$(dirname -- "$script_source")/.." && pwd -P)"
 
-if [ "$#" -ne 7 ]; then
-  echo "Usage:   ./single.sh <examid> <grader-name> <questions-grading> <serialnumber> <showbuttons?> <entermatrikel?> <showsummation?>"
-  echo 'Example: ./single.sh "rnds-feb-2026" "ClemensCap" "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17" "0004" true true false'
+if [ "$#" -ne 8 ]; then
+  echo "Usage:   ./single.sh <examid> <grader-name> <questions-grading> <serialnumber> <tag> <showbuttons?> <entermatrikel?> <showsummation?>"
+  echo 'Example: ./single.sh "rnds-feb-2026" "ClemensCap" "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17" "0004" "raw" true true false'
   exit 1
 fi
 
@@ -21,9 +21,10 @@ EXAMID="$1"
 GRADER="$2"
 GRADING="$3"
 SERIAL="$4"
-SHOWBUTTONS="$5"
-ENTERMATRIKEL="$6"
-SHOWSUMMATION="$7"
+TAG="$5"
+SHOWBUTTONS="$6"
+ENTERMATRIKEL="$7"
+SHOWSUMMATION="$8"
 
 
 ADAM="adam-exam-v1.1"
@@ -56,10 +57,14 @@ OUTPUT_DIRECTORY="${TOP_DIR}/klausuren/$EXAMID/build-corrections"
 GRADER_DIRECTORY="$TOP_DIR/klausuren/$EXAMID/corrections/$GRADER/"
 JOBNAME="${SERIAL}-${EXAMID}-${GRADER}"
 
-mkdir -p ${OUTPUT_DIRECTORY}
-mkdir -p ${GRADER_DIRECTORY}
+mkdir -p "${OUTPUT_DIRECTORY}"
+mkdir -p "${GRADER_DIRECTORY}/input-${TAG}"
+mkdir -p "${GRADER_DIRECTORY}/completed-${TAG}"
 
 # TEXINPUTS="${TOP_DIR}"
+
+# clear output directory to prevent interference by intermediary files
+rm "$OUTPUT_DIRECTORY/*"
 
 # compile to pdf
 pdflatex -jobname="$JOBNAME" -recorder -output-directory="$OUTPUT_DIRECTORY" ${SOURCE}
@@ -67,6 +72,6 @@ pdflatex -jobname="$JOBNAME" -recorder -output-directory="$OUTPUT_DIRECTORY" ${S
 pdflatex -jobname="$JOBNAME" -recorder -output-directory="$OUTPUT_DIRECTORY" ${SOURCE}
 
 # move to directory for proper grader 
-mv "$TOP_DIR/klausuren/$EXAMID/build-corrections/$JOBNAME.pdf" "$GRADER_DIRECTORY"
+mv "$TOP_DIR/klausuren/$EXAMID/build-corrections/$JOBNAME.pdf" "$GRADER_DIRECTORY/input-$TAG"
 
 printf "Completed \n"

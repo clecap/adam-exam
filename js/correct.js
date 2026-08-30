@@ -183,7 +183,7 @@ function numericKS(q, s, e) {          // called upon a keystroke, but we do not
 
 function onfocus (q, s, e) {     // called when discretionary gets the focus
   setCompleted (q, s, false);    // focusing the discretionary field clears completion checkbox
-  setAllCheckForQ (q, s, flag);  // focusing the discretionary field clears individual points checkboxes
+  setAllCheckForQ (q, s, false);  // focusing the discretionary field clears individual points checkboxes
   resetRadio (q, s);             // focusing the discretionary field clears completion checkbox
   return;
 }
@@ -521,21 +521,13 @@ function getSerial () {  // obtain the serial number of the PDF
 
 
 
-
-
-
-
-
-
 /* variables must be defined at the end or adobe vomits */
 
 var numQuestions;  
-
 var maxPoints = \thetotalpointsfromfile;
 
 
 checkProperSettings ();
-
 
 init();
 updateNextQuestButton();   // at the beginning, also already initialize this button properly

@@ -106,9 +106,11 @@ function getMissingSheets (eligibles) {   // return an array of sheets mentioned
 
 getStatusString();
 
-app.alert (getMissingSheets());
+var miss = getMissingSheets();
 
-//if (checkProperSettings()) {mainStart();}
+if (miss.length > 0)  {app.alert ("" + miss.length + " missing sheets: " + getMissingSheets());}
+
+
 
 
 

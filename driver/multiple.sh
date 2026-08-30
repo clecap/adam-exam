@@ -15,18 +15,19 @@ echo ""
 echo "Top directory is: $TOP_DIR"
 echo ""
 
-if [[ $# -lt 6 ]]; then
-  echo "Usage:   ./multiple.sh <examid> <grader-name> <questions-grading> <showbuttons?> <entermatrikel?> <showsummation?>"
-  echo 'Example: ./multiple.sh "rnds-feb-2026" "Cap" "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17" true true true'
+if [[ $# -lt 7 ]]; then
+  echo "Usage:   ./multiple.sh <examid> <grader-name> <questions-grading> <tag> <showbuttons?> <entermatrikel?> <showsummation?>"
+  echo 'Example: ./multiple.sh "rnds-feb-2026" "Cap" "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17" "raw" true true true'
   exit 1
 fi
 
 EXAMID="$1"
 GRADER="$2"
 GRADING="$3"
-SHOWBUTTONS="$4"
-ENTERMATRIKEL="$5"
-SHOWSUMMATION="$6"
+TAG="$4"
+SHOWBUTTONS="$5"
+ENTERMATRIKEL="$6"
+SHOWSUMMATION="$7"
 
 
 # Anchored at TOP_DIR, not at the current working directory: the script must
@@ -34,7 +35,8 @@ SHOWSUMMATION="$6"
 MY_DIR="$TOP_DIR/klausuren/$EXAMID/"
 
 mkdir -p "$MY_DIR/build-corrections/"
-mkdir -p "$MY_DIR/corrections/$GRADER/"
+mkdir -p "$MY_DIR/corrections/$GRADER/input-$TAG"
+mkdir -p "$MY_DIR/corrections/$GRADER/completed-$TAG"
 mkdir -p "$MY_DIR/pdf-exams-clean/"
 
 # directory where we have all the cleaned, perfect pdfs which will now
@@ -60,8 +62,8 @@ for file in "$DIR"/*.pdf; do
 #  SERIAL="${name:0:4}"        # first 4 characters (bash substring)
   SERIAL="${name}"
   echo -e "\n\n"
-  echo "********** Command is: ${TOP_DIR}/driver/single.sh \"$EXAMID\" \"$GRADER\" \"$GRADING\" \"$SERIAL\" $SHOWBUTTONS $ENTERMATRIKEL $SHOWSUMMATION"
-  ${TOP_DIR}/driver/single.sh "$EXAMID" "$GRADER" "$GRADING" "$SERIAL" $SHOWBUTTONS $ENTERMATRIKEL $SHOWSUMMATION
+  echo "********** Command is: ${TOP_DIR}/driver/single.sh \"$EXAMID\" \"$GRADER\" \"$GRADING\" \"$SERIAL\"  \"$TAG\" $SHOWBUTTONS $ENTERMATRIKEL $SHOWSUMMATION"
+  ${TOP_DIR}/driver/single.sh "$EXAMID" "$GRADER" "$GRADING" "$SERIAL" "$TAG" $SHOWBUTTONS $ENTERMATRIKEL $SHOWSUMMATION
   echo "Command completed"
 done
 
@@ -74,8 +76,8 @@ done
 CORR_DIR="${TOP_DIR}/klausuren/${EXAMID}/corrections/${GRADER}"
 QUEUE_FILE="${CORR_DIR}/queue.txt"
 
-mkdir -p "$CORR_DIR"
-mkdir -p "$CORR_DIR/completed"
+
+
 
 
 : > "$QUEUE_FILE"
@@ -83,12 +85,12 @@ queue_count=0
 
 # nullglob is set above, so an empty directory yields an empty list, not "*.pdf".
 # The glob is expanded in sorted order, which keeps the queue deterministic.
-for pdf in "$CORR_DIR"/*.pdf; do
+for pdf in "$CORR_DIR/input-$TAG"/*.pdf; do
   pdfname="${pdf##*/}"
   if [[ "$pdfname" == "START.pdf" ]]; then
     continue
   fi
-  echo "$pdfname" >> "$QUEUE_FILE"
+  echo "input-$TAG/$pdfname" >> "$QUEUE_FILE"
   queue_count=$((queue_count + 1))
 done
 

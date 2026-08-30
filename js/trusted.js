@@ -11,7 +11,7 @@
 // we open these functions up only to situations where we are called inside of adam-exam for proper file types
 function AssertSafeAdamPath(cPath, cRequiredExt) {
 
-  function fail(arg) { app.alert(arg); throw arg; }                              // function fail for alerting and throwing
+  function fail(arg) { app.alert(arg); arg = new Error (arg); throw arg; }                              // function fail for alerting and throwing
 
 try {
 
@@ -50,7 +50,7 @@ TrustedSaveAs = app.trustedFunction(function(path, close) {
     app.beginPriv();
     this.saveAs(path);
     if (close === true) {this.closeDoc (true); }   // true: close without asking
-  } catch (e) {app.alert("EXCEPTION in trusted.js/TrustedSaveAs: Save failed. \n\n Details: " + e); } 
+  } catch (e) {app.alert("EXCEPTION in trusted.js/TrustedSaveAs: Save failed for path="+path+" and close="+close+ " \n\n Details: " + e); } 
   finally {app.endPriv();}
 });
 
@@ -95,7 +95,7 @@ ReadQueueFile = app.trustedFunction ( function(baseDir) {
   catch (ex) { app.alert ("EXCEPTION in trusted.js/ReadQueueFile: Could not read file queue.txt. \n\n Does file exist? \n Are you in the correct directory? \n\n Details: " + ex); 
     this.dirty = false;     // avoid save prompt
     this.closeDoc(true);    // true = no UI (if permitted)
-    throw "Missing-Queue-File";
+    throw new Error ("Missing-Queue-File");
   }
   finally {  app.endPriv(); }
 } );
