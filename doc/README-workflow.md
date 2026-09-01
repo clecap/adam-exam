@@ -44,25 +44,22 @@ All phases are executed on a single (preferably) Linux / MacOS node where
 
 # OLD NOTES
 
-## With Driver:
+## Scan Preparaiont and Cleaning
 
-Step 1: Place all pdf scan files of an exam into directory klausuren/<examid>/scan-input. 
+1. Place all pdf scans of the exams into directory klausuren/<examid>/scan-input. 
 
-* The file extension should be .pdf and is case insensitive.
+* The file extension shoudl be .pdf
+* The scan may consist of several parts and may contain several scan runs of the same pile of sheets.
+* In case of scan problems, simply scan the offending pages or even all pages again and add the filese to this directory. Run the below script again. Duplicates are discarded automagically.
 
+2. On Docker do
 
+```./driver/driver.sh <examid>``` 
 
-```
-* Place file   scan-<examid>.pdf into directory klausuren/<examid>/pdf-scans
-* ./driver.sh <examid>
-** Produces pdf-exams-raw
-```
+3. Directory ```pdf-exams-clean``` should now contain the exam sheets, ready for further processing
 
-Copy into pdf-exams-clean the completely workign ones (still bug in workflow)
+## Splitting 
 
-Step 2: Prepare raw exam files
-
-* ./driver.sh <examid>
 
 Step 3: Split exam files into grading files.
 

@@ -37,9 +37,8 @@ Grading takes place with the **Adobe PDF Reader**. It uses the JavaScript and fo
 * Preferences -> JavaScript -> Enable Acrobat JavaScript
 * Preferences -> JavaScript -> JavaScript Debugger -> Show console on errors and messages
 * Preferences -> Security (Enhanced) -> Add Folder Path: Select the directory in which the exam sheets reside. (It may also be a parent-directory through several transitive steps).
-* Place file ``` js/trusted.js``` from the [Github Repository](https://github.com/clecap/adam-exam) into directory for trusted JS.
-  On MacOS this is:
- ```<user-homedirectory>/Library/Application Support/Adobe/Acrobat/DC/JavaScripts```
+* Place file ```js/trusted.js``` from [this Github Repository https://github.com/clecap/adam-exam](https://github.com/clecap/adam-exam) into the directory which the Adobe PDF Reader uses for trusted JS. This directory can be found on MacOS on this path:
+   ```<user-homedirectory>/Library/Application Support/Adobe/Acrobat/DC/JavaScripts```
 
  This JavaScript file provides some additional trusted functionality to the Adobe PDF Reader.
  The use of these functions is limited to subdirectories of a directory called ```adam-exam```.
@@ -134,6 +133,10 @@ When adjusting the grading table: Note that percentages are rounded usign the ce
 * Some constructions in the workflow are the consequence of the other security mechanisms imposed by Adobe PDF Reader. For example, there is no function for traversing a directory. Thus, the file ```queue.txt```is used.
 </details>
 
+
+
+
+## Instructions for 
 
 
 # Further parts of this readme are still draft status and preliminary
